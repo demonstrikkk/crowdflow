@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { Pause, Play, RotateCcw } from 'lucide-react';
 import type { PlaybackFrame } from '../../store/SimulationContext';
 import type { EventPhaseModel } from '../../lib/types';
 
@@ -159,10 +160,10 @@ export default function Timeline({
           <div className="absolute -top-0.5 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full bg-od-ink" />
         </div>
 
-        <div className="absolute left-0 bottom-[-2px] text-[9px] uppercase tracking-[0.14em] text-od-muted mono-tabular">
+        <div className="absolute left-0 bottom-[-2px] sec-label mono-tabular">
           {shown.toFixed(1)} min
         </div>
-        <div className="absolute right-0 bottom-[-2px] text-[9px] uppercase tracking-[0.14em] text-od-muted mono-tabular">
+        <div className="absolute right-0 bottom-[-2px] sec-label mono-tabular">
           {span.toFixed(0)} min
         </div>
       </div>
@@ -176,10 +177,11 @@ export default function Timeline({
           title="Rewind to start"
           aria-label="Rewind to start"
         >
-          ⟲ REWIND
+          <RotateCcw className="h-3 w-3" /> REWIND
         </button>
         <button className="btn btn-solid" onClick={playing ? onPause : onPlay} disabled={!simId} aria-label={playing ? 'Pause' : 'Play'}>
-          {playing ? '❚❚ PAUSE' : '► PLAY'}
+          {playing ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+          {playing ? 'PAUSE' : 'PLAY'}
         </button>
         <span className="w-px h-4 bg-od-line mx-1" />
         {speeds.map((s) => (

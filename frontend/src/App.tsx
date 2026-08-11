@@ -1,32 +1,54 @@
 import { useCallback, useState } from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, X } from 'lucide-react';
 import Rail from './components/shell/Rail';
 import Instrument from './components/workspace/Instrument';
 import SettingsScreen from './components/shell/SettingsScreen';
 import VenueBuilderView from './views/VenueBuilderView';
 import ScenarioBuilderView from './views/ScenarioBuilderView';
+import CreateTwinView from './views/CreateTwinView';
 import { SimulationProvider, useSimulation } from './store/SimulationContext';
 import type { Mode, WorkspaceView } from './lib/selection';
 import './App.css';
 
-function SecondaryFrame({ title, children }: { title: string; children: React.ReactNode }) {
+function SecondaryFrame({
+  title,
+  children,
+  onBack,
+}: {
+  title: string;
+  children: React.ReactNode;
+  onBack: () => void;
+}) {
   return (
-    <div className="flex h-full flex-col bg-background">
-      <div className="flex items-center justify-between border-b border-outline-variant px-5 py-3">
-        <div>
-          <h1 className="font-display-xl font-extrabold uppercase tracking-tighter leading-none text-[clamp(20px,2.6vw,30px)]">
+    <div className="flex h-full flex-col bg-od-canvas">
+      <div className="flex shrink-0 items-center gap-4 border-b border-od-line bg-od-panel px-4 py-3">
+        <button
+          onClick={onBack}
+          aria-label="Back to operations"
+          title="Back to the workspace"
+          className="btn btn-ghost"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="font-display text-[15px] font-bold uppercase tracking-[0.18em] text-od-ink leading-none">
             {title}
           </h1>
-          <p className="mt-1 text-[10px] uppercase tracking-[0.24em] text-secondary">CROWDFLOW COMMAND CENTRE</p>
+          <p className="mt-1 text-[9px] uppercase tracking-[0.24em] text-od-muted">CrowdFlow command centre</p>
         </div>
+        <span className="flex-1" />
+        <span className="chip">
+          <span className="status-dot is-ok" />
+          {title} catalogue
+        </span>
       </div>
-      <div className="flex-1 overflow-y-auto scrollbar-thin p-4 md:p-6">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin p-4 md:p-6">{children}</div>
     </div>
   );
 }
 
 function Shell() {
-  const { backendOnline, error, clearError, theme, toggleTheme } = useSimulation();
+  const { backendOnline, error, clearError, theme, toggleTheme, venue } = useSimulation();
   const [view, setView] = useState<WorkspaceView>('simulate');
   const go = useCallback((v: WorkspaceView) => setView(v), []);
   const mode: Mode = ['simulate', 'investigate', 'intervene', 'compare'].includes(view)
@@ -62,21 +84,21 @@ function Shell() {
 
         <div className="min-h-0 flex-1">
           {view === 'scenarios' && (
-            <SecondaryFrame title="Scenarios">
+            <SecondaryFrame title="Scenarios" onBack={() => go('simulate')}>
               <ScenarioBuilderView />
             </SecondaryFrame>
           )}
           {view === 'venues' && (
-            <SecondaryFrame title="Venues">
+            <SecondaryFrame title="Venues" onBack={() => go('simulate')}>
               <VenueBuilderView />
             </SecondaryFrame>
           )}
           {view === 'settings' && <SettingsScreen theme={theme} onToggleTheme={toggleTheme} backendOnline={backendOnline} go={go} />}
-          {!isSecondary && <Instrument mode={mode} onMode={go} />}
+          {!isSecondary && (venue ? <Instrument mode={mode} onMode={go} /> : <CreateTwinView onReady={() => go('simulate')} />)}
         </div>
 
         {/* mobile mode bar */}
-        {!isSecondary && (
+        {!isSecondary && venue && (
           <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-t border-od-line bg-od-panel px-2 py-1 md:hidden">
             {(['simulate', 'investigate', 'intervene', 'compare'] as Mode[]).map((m) => (
               <button

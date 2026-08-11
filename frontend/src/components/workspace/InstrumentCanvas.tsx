@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Boxes, PanelsTopLeft, RefreshCw } from 'lucide-react';
 import type { ExternalEnvironment, SimulationState, VenueModel } from '../../lib/types';
 import { elementColor } from '../../lib/format';
@@ -18,6 +18,13 @@ export interface DraftState {
 
 export type CanvasScope = 'venue' | 'surround' | 'network';
 
+/** Spatial action issued from the venue itself (the world is the interface). */
+export type SpatialAction =
+  | { type: 'close'; selection: Selection }
+  | { type: 'open'; selection: Selection }
+  | { type: 'redirect'; selection: Selection }
+  | { type: 'incident'; selection: Selection };
+
 export interface CanvasProps {
   sim: SimulationState | null;
   venue: VenueModel | null;
@@ -33,6 +40,7 @@ export interface CanvasProps {
   scope?: CanvasScope;
   onScope?: (s: CanvasScope) => void;
   onRefreshEnvironment?: () => void;
+  onSpatialAction?: (action: SpatialAction) => void;
 }
 
 const NODE_KIND: Record<string, string> = {
@@ -84,10 +92,13 @@ export default function InstrumentCanvas({
   scope = 'venue',
   onScope,
   onRefreshEnvironment,
+  onSpatialAction,
 }: CanvasProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const [hover, setHover] = useState<Selection | null>(null);
   const [iso, setIso] = useState(false);
+  const [ring, setRing] = useState<{ x: number; y: number } | null>(null);
 
   const W = venue?.width ?? 1000;
   const H = venue?.height ?? 620;
@@ -169,6 +180,40 @@ export default function InstrumentCanvas({
 
   // congestion lookup for the surrounding road elements
   const extState = useMemo(() => new Map(Object.entries(sim?.external?.elements ?? {})), [sim?.external?.elements]);
+
+  // anchor the spatial action ring at the selected element's screen position
+  useLayoutEffect(() => {
+    const svg = svgRef.current;
+    const root = rootRef.current;
+    if (!svg || !root || !selected || mode !== 'intervene' || !interactive) {
+      setRing(null);
+      return;
+    }
+    const ctm = svg.getScreenCTM();
+    if (!ctm) {
+      setRing(null);
+      return;
+    }
+    let anchor: { x: number; y: number } | null = null;
+    const projAt = (id: string) => proj.get(id) ?? null;
+    if (selected.kind === 'node') {
+      anchor = projAt(selected.id);
+    } else {
+      const e = venue?.edges.find((x) => edgeKey(x.source, x.destination) === selected.id);
+      if (e) {
+        const a = projAt(e.source);
+        const b = projAt(e.destination);
+        if (a && b) anchor = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+      }
+    }
+    if (!anchor) {
+      setRing(null);
+      return;
+    }
+    const pt = new DOMPoint(anchor.x, anchor.y).matrixTransform(ctm);
+    const r = root.getBoundingClientRect();
+    setRing({ x: pt.x - r.left, y: pt.y - r.top });
+  }, [selected, iso, mode, interactive, venue, proj]);
 
   const isoFloor = useMemo(() => {
     if (!iso) return null;
@@ -293,7 +338,7 @@ export default function InstrumentCanvas({
   const agentShadowOffset = iso ? Math.max(1, nodeR * 0.22) : 0;
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-od-canvas">
+    <div ref={rootRef} className="od-grid-canvas relative h-full w-full overflow-hidden">
       <svg
         ref={svgRef}
         viewBox={activeViewBox}
@@ -671,6 +716,97 @@ export default function InstrumentCanvas({
           </g>
         )}
       </svg>
+
+      {/* spatial action ring — the world is the interface */}
+      {mode === 'intervene' && interactive && selected && ring && (() => {
+        const node = selected.kind === 'node' ? venue?.nodes.find((n) => n.id === selected.id) ?? null : null;
+        const edge =
+          selected.kind === 'edge' ? venue?.edges.find((e) => edgeKey(e.source, e.destination) === selected.id) ?? null : null;
+
+        const isGate = node?.type === 'ENTRY';
+        const isExit = node?.type === 'EXIT' || node?.type === 'EMERGENCY_EXIT';
+        const incidentEdges = node
+          ? venue?.edges.filter((e) => e.source === node.id || e.destination === node.id).map((e) => edgeKey(e.source, e.destination)) ?? []
+          : [];
+        const gateClosed = incidentEdges.length > 0 && incidentEdges.every((k) => drafts?.closedEdgeIds.includes(k) ?? false);
+
+        const ringActions: { label: string; tone?: 'danger' | 'ok' | 'warn'; act: () => void; disabled?: boolean }[] = [];
+
+        if (isGate || isExit) {
+          ringActions.push({
+            label: gateClosed ? 'OPEN GATE' : 'CLOSE GATE',
+            tone: gateClosed ? 'ok' : 'danger',
+            disabled: incidentEdges.length === 0,
+            act: () => {
+              if (gateClosed) onSpatialAction?.({ type: 'open', selection: selected });
+              else onSpatialAction?.({ type: 'close', selection: selected });
+            },
+          });
+        }
+        if (isGate) {
+          ringActions.push({
+            label: 'REDIRECT',
+            act: () => onSpatialAction?.({ type: 'redirect', selection: selected }),
+          });
+        }
+        if (selected.kind === 'edge' && edge) {
+          const closedDraft = drafts?.closedEdgeIds.includes(selected.id) ?? false;
+          ringActions.push({
+            label: closedDraft ? 'OPEN CORRIDOR' : 'CLOSE CORRIDOR',
+            tone: closedDraft ? 'ok' : 'danger',
+            act: () =>
+              onSpatialAction?.(
+                closedDraft ? { type: 'open', selection: selected } : { type: 'close', selection: selected },
+              ),
+          });
+        }
+        ringActions.push({
+          label: 'INCIDENT',
+          tone: 'warn',
+          act: () => onSpatialAction?.({ type: 'incident', selection: selected }),
+        });
+
+        const boxW = 150;
+        const rows = ringActions.length;
+        const left = Math.min(Math.max(6, ring.x + 14), (rootRef.current?.clientWidth ?? 600) - boxW - 6);
+        const top = Math.min(Math.max(6, ring.y - rows * 18), (rootRef.current?.clientHeight ?? 400) - rows * 30 - 6);
+        return (
+          <div
+            className="absolute z-20 border border-od-line bg-od-panel shadow-sm"
+            style={{ left, top, width: boxW }}
+            onPointerDown={(e) => e.stopPropagation()}
+            role="group"
+            aria-label={`Actions for ${selected.id}`}
+          >
+            <div className="flex items-center justify-between border-b border-od-line px-2 py-1">
+              <span className="truncate text-[9px] uppercase tracking-[0.14em] text-od-ink font-bold">
+                {node ? node.id.replace(/_/g, ' ') : edge?.id.replace(/_/g, ' ') ?? selected.id}
+              </span>
+              <button
+                className="cursor-pointer text-od-muted hover:text-od-ink px-0.5"
+                onClick={() => onSelect?.(null)}
+                aria-label="Close actions"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-1 space-y-1">
+              {ringActions.map((a) => (
+                <button
+                  key={a.label}
+                  disabled={a.disabled}
+                  onClick={a.act}
+                  className={`btn w-full ${
+                    a.tone === 'danger' ? 'btn-danger' : a.tone === 'ok' ? 'btn-ok' : a.tone === 'warn' ? 'btn-solid' : 'btn-ghost'
+                  }`}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* projection toggle */}
       {interactive && (

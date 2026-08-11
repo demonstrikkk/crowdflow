@@ -1,12 +1,13 @@
 import type { ScenarioModel, SimulationState, VenueModel } from '../../lib/types';
 import type { Mode } from '../../lib/selection';
+import { Pause, Play } from 'lucide-react';
 import CommandBar from './CommandBar';
 
 const MODE_TITLE: Record<Mode, string> = {
-  simulate: 'SIMULATE',
-  investigate: 'INVESTIGATE',
-  intervene: 'INTERVENE',
-  compare: 'COMPARE',
+  simulate: 'OBSERVE',
+  investigate: 'UNDERSTAND',
+  intervene: 'ACT',
+  compare: 'DECIDE',
 };
 
 function WeatherChip({ sim }: { sim: SimulationState }) {
@@ -60,17 +61,21 @@ export default function TopBar({
 }) {
   const playing = sim?.status === 'RUNNING';
   return (
-    <header className="flex items-center gap-3 border-b border-od-line bg-od-panel px-3 h-12 shrink-0">
-      <h2 className="font-display text-[13px] font-bold uppercase tracking-[0.24em] text-od-ink">
-        {MODE_TITLE[mode]}
-      </h2>
-      <span className="w-px h-4 bg-od-line" />
-      <div className="flex items-center gap-1.5 min-w-0">
-        <span className="text-[10px] uppercase tracking-[0.16em] text-od-muted">Venue</span>
-        <span className="num truncate max-w-[140px]">{venue?.name ?? '—'}</span>
+    <header className="flex h-12 shrink-0 items-center gap-3 border-b border-od-line bg-od-panel px-3">
+      <div className="flex min-w-0 items-baseline gap-3">
+        <h2 className="font-display text-[15px] font-bold uppercase tracking-[0.18em] text-od-ink truncate max-w-[200px]" title={venue?.name}>
+          {venue?.name ?? '—'}
+        </h2>
+        <span className="chip" title="Operational state of this workspace">
+          <span className={`status-dot ${playing ? 'is-ok' : 'is-scan'}`} />
+          {MODE_TITLE[mode]}
+        </span>
       </div>
-      <div className="flex items-center gap-1.5 min-w-0">
-        <span className="text-[10px] uppercase tracking-[0.16em] text-od-muted">Event</span>
+
+      <span className="h-4 w-px shrink-0 bg-od-line" />
+
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span className="sec-label">Event</span>
         <select
           className="field !w-auto max-w-[180px]"
           value={scenario?.id ?? ''}
@@ -85,23 +90,34 @@ export default function TopBar({
           ))}
         </select>
       </div>
+
       <span className="flex-1" />
+
+      {sim && (
+        <div className="hidden items-baseline gap-1.5 sm:flex" title="Simulation clock">
+          <span className="sec-label">t=</span>
+          <span className="num text-[13px] font-bold text-od-ink">{sim.t_min.toFixed(1)}</span>
+          <span className="sec-label">min</span>
+        </div>
+      )}
+
       {sim && <WeatherChip sim={sim} />}
       {sim && <IncidentChip sim={sim} />}
+
       <CommandBar />
-      {sim && (
-        <span className="text-[10px] uppercase tracking-[0.16em] text-od-muted mono-tabular">
-          t=<span className="text-od-ink">{sim.t_min.toFixed(1)}</span>m
-        </span>
-      )}
-      <span className={`status-dot ${wsConnected ? 'is-ok' : 'is-scan'}`} title={wsConnected ? 'Live feed' : 'No live feed'} />
+
+      <span
+        className={`status-dot ${wsConnected ? 'is-ok' : 'is-scan'}`}
+        title={wsConnected ? 'Live feed' : 'No live feed'}
+      />
+
       {sim && (
         <button
           className="btn btn-solid"
           onClick={playing ? onPause : onPlay}
           aria-label={playing ? 'Pause' : 'Play'}
         >
-          {playing ? '❚❚' : '►'}
+          {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
         </button>
       )}
     </header>

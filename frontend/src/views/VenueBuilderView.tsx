@@ -221,22 +221,28 @@ function Builder({ venue, onChange }: BuilderProps) {
   const selectedEdge = edgeAt(selected ?? '');
   const selIsNode = selected != null && selectedNode != null;
 
+  const toolBtn = (active: boolean) =>
+    `flex items-center gap-1 border px-2 py-1 text-[9px] uppercase tracking-[0.12em] font-bold cursor-pointer transition-colors ${
+      active
+        ? 'border-od-ink bg-od-ink text-od-bg'
+        : 'border-od-line bg-od-surface text-od-soft hover:border-od-ink hover:text-od-ink'
+    }`;
+
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_280px] gap-lg items-start">
-      <div className="border border-outline-variant bg-surface-container-lowest relative overflow-hidden">
+    <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="blk relative overflow-hidden">
         <svg
           ref={svgRef}
           viewBox={`0 0 ${venue.width} ${venue.height}`}
-          className="w-full h-[56vh] min-h-[420px] cursor-crosshair"
+          className="h-[56vh] min-h-[420px] w-full cursor-crosshair"
           style={{ touchAction: 'none' }}
           onClick={onCanvasClick}
           role="img"
           aria-label="Venue graph editor canvas"
         >
-          <rect width={venue.width} height={venue.height} fill="#f9f9f9" />
-          {/* grid pattern */}
+          <rect width={venue.width} height={venue.height} fill="var(--od-canvas)" />
           <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
-            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="#e2e2e2" strokeWidth="0.6" />
+            <path d="M 50 0 L 0 0 0 50" fill="none" stroke="var(--od-line)" strokeWidth="0.6" opacity="0.4" />
           </pattern>
           <rect width={venue.width} height={venue.height} fill="url(#grid)" />
 
@@ -261,17 +267,17 @@ function Builder({ venue, onChange }: BuilderProps) {
                   y1={a.position.y}
                   x2={b.position.x}
                   y2={b.position.y}
-                  stroke={!e.is_open ? '#ff291a' : '#000000'}
+                  stroke={!e.is_open ? 'var(--od-danger)' : 'var(--od-ink)'}
                   strokeWidth={active ? 3 : e.is_emergency ? 2.4 : 1.6}
                   strokeDasharray={!e.is_open ? '5 4' : undefined}
-                  strokeOpacity={0.75}
+                  strokeOpacity={active ? 1 : 0.6}
                 />
                 {active && (
                   <circle
                     cx={(a.position.x + b.position.x) / 2}
                     cy={(a.position.y + b.position.y) / 2}
                     r={4}
-                    fill="#ff291a"
+                    fill="var(--od-danger)"
                     pointerEvents="none"
                   />
                 )}
@@ -282,7 +288,7 @@ function Builder({ venue, onChange }: BuilderProps) {
           {venue.nodes.map((n) => {
             const active = selectedNode?.id === n.id;
             const r = n.type === 'ZONE' ? 16 : 8;
-            const stroke = n.type === 'EMERGENCY_EXIT' ? '#c25700' : '#000000';
+            const stroke = n.type === 'EMERGENCY_EXIT' ? 'var(--od-warn)' : 'var(--od-ink)';
             return (
               <g
                 key={n.id}
@@ -291,35 +297,29 @@ function Builder({ venue, onChange }: BuilderProps) {
                 onPointerDown={(e) => onNodeDrag(e, n.id)}
                 className="cursor-pointer"
               >
-                {active && <circle r={r + 4} fill="none" stroke="#ff291a" strokeWidth={1.2} />}
+                {active && <circle r={r + 4} fill="none" stroke="var(--od-danger)" strokeWidth={1.2} />}
                 {n.type === 'ENTRY' && (
-                  <rect x={-r} y={-r} width={r * 2} height={r * 2} fill="#ffffff" stroke={stroke} strokeWidth={1.6} />
+                  <rect x={-r} y={-r} width={r * 2} height={r * 2} fill="var(--od-surface)" stroke={stroke} strokeWidth={1.6} />
                 )}
                 {n.type === 'EXIT' && (
-                  <path d={`M${-r},${-r} L${r},0 L${-r},${r} Z`} fill="#ffffff" stroke={stroke} strokeWidth={1.6} />
+                  <path d={`M${-r},${-r} L${r},0 L${-r},${r} Z`} fill="var(--od-surface)" stroke={stroke} strokeWidth={1.6} />
                 )}
                 {n.type === 'EMERGENCY_EXIT' && (
-                  <path d={`M0,${-r} L${r},0 L0,${r} L${-r},0 Z`} fill="#ffffff" stroke={stroke} strokeWidth={1.8} />
+                  <path d={`M0,${-r} L${r},0 L0,${r} L${-r},0 Z`} fill="var(--od-surface)" stroke={stroke} strokeWidth={1.8} />
                 )}
                 {n.type === 'CONCESSION' && (
-                  <circle r={r} fill="#ffffff" stroke={stroke} strokeWidth={1.6} />
+                  <circle r={r} fill="var(--od-surface)" stroke={stroke} strokeWidth={1.6} />
                 )}
                 {n.type === 'CHECKPOINT' && (
-                  <circle r={r} fill="#ffffff" stroke={stroke} strokeWidth={1.6} strokeDasharray="3 2" />
+                  <circle r={r} fill="var(--od-surface)" stroke={stroke} strokeWidth={1.6} strokeDasharray="3 2" />
                 )}
                 {n.type === 'INTERSECTION' && (
-                  <rect x={-r * 0.6} y={-r * 0.6} width={r * 1.2} height={r * 1.2} fill="#ffffff" stroke={stroke} strokeWidth={1.4} />
+                  <rect x={-r * 0.6} y={-r * 0.6} width={r * 1.2} height={r * 1.2} fill="var(--od-surface)" stroke={stroke} strokeWidth={1.4} />
                 )}
                 {n.type === 'ZONE' && (
-                  <rect x={-r * 1.1} y={-r * 1.1} width={r * 2.2} height={r * 2.2} fill="#eeeeee" stroke={stroke} strokeWidth={1.4} />
+                  <rect x={-r * 1.1} y={-r * 1.1} width={r * 2.2} height={r * 2.2} fill="var(--od-surface-dim)" stroke={stroke} strokeWidth={1.4} />
                 )}
-                <text
-                  y={r + 16}
-                  textAnchor="middle"
-                  fontSize="8"
-                  fill="#5d5f5f"
-                  fontWeight={700}
-                >
+                <text y={r + 16} textAnchor="middle" fontSize="8" fill="var(--od-muted)" fontWeight={700}>
                   {n.id}
                 </text>
               </g>
@@ -327,7 +327,7 @@ function Builder({ venue, onChange }: BuilderProps) {
           })}
         </svg>
 
-        <div className="absolute top-2 left-2 flex gap-xs bg-surface-container-lowest/90 border border-outline-variant px-sm py-xs">
+        <div className="absolute top-2 left-2 flex gap-1 border border-od-line bg-od-panel/90 px-2 py-1">
           {(
             [
               { id: 'select', label: 'Select/Drag', icon: MousePointer2 },
@@ -341,19 +341,15 @@ function Builder({ venue, onChange }: BuilderProps) {
                 setTool(t.id);
                 setConnectFrom(null);
               }}
-              className={`px-sm py-xs text-[9px] uppercase tracking-[0.16em] font-bold flex items-center gap-xs cursor-pointer transition-none border ${
-                tool === t.id
-                  ? 'bg-primary text-background border-primary'
-                  : 'border-outline-variant text-primary hover:bg-primary hover:text-background'
-              }`}
+              className={toolBtn(tool === t.id)}
             >
-              <t.icon className="w-3 h-3" />
+              <t.icon className="h-3 w-3" />
               {t.label}
             </button>
           ))}
         </div>
 
-        <div className="absolute top-2 right-2 flex gap-xs bg-surface-container-lowest/90 border border-outline-variant px-sm py-xs">
+        <div className="absolute top-2 right-2 flex flex-wrap justify-end gap-1 border border-od-line bg-od-panel/90 px-2 py-1">
           {NODE_TYPES.map((t) => (
             <button
               key={t}
@@ -361,11 +357,7 @@ function Builder({ venue, onChange }: BuilderProps) {
                 setType(t);
                 setTool('add');
               }}
-              className={`px-sm py-xs text-[9px] uppercase tracking-[0.14em] font-bold cursor-pointer transition-none border ${
-                type === t && tool === 'add'
-                  ? 'bg-primary text-background border-primary'
-                  : 'border-outline-variant text-primary hover:bg-primary hover:text-background'
-              }`}
+              className={toolBtn(type === t && tool === 'add')}
             >
               {t.replace(/_/g, ' ')}
             </button>
@@ -374,28 +366,33 @@ function Builder({ venue, onChange }: BuilderProps) {
       </div>
 
       {/* inspector */}
-      <div className="space-y-lg">
-        <div className="border border-outline-variant">
-          <div className="px-md py-sm bg-surface-container-low grid-line-bottom text-[10px] font-bold uppercase tracking-[0.2em]">
-            Inspector
+      <div className="space-y-5">
+        <div className="blk">
+          <div className="blk-hd">
+            <span className="sec-label">Inspector</span>
+            {selected && (
+              <button onClick={() => setSelected(null)} className="btn btn-ghost !px-2 !py-1">
+                CLEAR
+              </button>
+            )}
           </div>
           {!selected && (
-            <div className="px-md py-md text-[10px] uppercase tracking-[0.16em] text-secondary leading-relaxed">
+            <div className="px-4 py-6 text-center text-[10px] uppercase tracking-[0.14em] leading-relaxed text-od-muted">
               Select a node or walkway to edit its properties.
             </div>
           )}
           {selIsNode && selectedNode && (
-            <div className="px-md py-md space-y-md">
-              <div className="flex items-center justify-between gap-md">
-                <span className="text-[10px] uppercase tracking-[0.16em] text-secondary">Node</span>
-                <span className="text-[11px] font-bold">{selectedNode.id}</span>
+            <div className="space-y-3 px-4 py-4">
+              <div className="flex items-center justify-between border-b border-od-line pb-2">
+                <span className="sec-label">Node</span>
+                <span className="num text-[12px] font-bold text-od-ink">{selectedNode.id}</span>
               </div>
-              <div className="flex items-center gap-sm">
-                <span className="text-[10px] uppercase tracking-[0.16em] text-secondary flex-1">Type</span>
+              <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted">
+                <span className="flex-1">Type</span>
                 <select
                   value={selectedNode.type}
                   onChange={(e) => updateNode(selectedNode.id, { type: e.target.value as NodeType })}
-                  className="bg-background border border-primary px-sm py-xs text-[10px] font-bold uppercase tracking-widest cursor-pointer"
+                  className="field cursor-pointer"
                 >
                   {NODE_TYPES.map((t) => (
                     <option key={t} value={t}>
@@ -403,9 +400,9 @@ function Builder({ venue, onChange }: BuilderProps) {
                     </option>
                   ))}
                 </select>
-              </div>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Capacity (p/min)
+              </label>
+              <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted">
+                <span className="flex-1">Capacity (p/min)</span>
                 <input
                   type="number"
                   value={selectedNode.capacity ?? ''}
@@ -415,11 +412,11 @@ function Builder({ venue, onChange }: BuilderProps) {
                       capacity: e.target.value === '' ? null : Number(e.target.value),
                     })
                   }
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
+                  className="field flex-1 !max-w-[120px] text-[11px] font-bold mono-tabular"
                 />
               </label>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Area m² (ZONE)
+              <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted">
+                <span className="flex-1">Area m² (ZONE)</span>
                 <input
                   type="number"
                   value={selectedNode.area_m2 ?? ''}
@@ -429,78 +426,74 @@ function Builder({ venue, onChange }: BuilderProps) {
                       area_m2: e.target.value === '' ? null : Number(e.target.value),
                     })
                   }
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
+                  className="field flex-1 !max-w-[120px] text-[11px] font-bold mono-tabular"
                 />
               </label>
-              <div className="flex gap-sm">
-                <button
-                  onClick={() => deleteNode(selectedNode.id)}
-                  className="btn-outline flex-1 text-error"
-                  style={{ borderColor: 'currentColor' }}
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Delete node
-                </button>
-              </div>
+              <button
+                onClick={() => deleteNode(selectedNode.id)}
+                className="btn btn-danger w-full"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> Delete node
+              </button>
             </div>
           )}
           {!selIsNode && selectedEdge && (
-            <div className="px-md py-md space-y-md">
-              <div className="flex items-center justify-between gap-md">
-                <span className="text-[10px] uppercase tracking-[0.16em] text-secondary">Walkway</span>
-                <span className="text-[11px] font-bold mono-tabular">{selected}</span>
+            <div className="space-y-3 px-4 py-4">
+              <div className="flex items-center justify-between border-b border-od-line pb-2">
+                <span className="sec-label">Walkway</span>
+                <span className="num text-[11px] font-bold text-od-ink mono-tabular">{selected}</span>
               </div>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Width (m)
+              <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted">
+                <span className="flex-1">Width (m)</span>
                 <input
                   type="number"
                   step="0.5"
                   value={selectedEdge.width_m}
                   onChange={(e) => updateEdge(selected!, { width_m: Number(e.target.value) })}
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
+                  className="field !max-w-[120px] text-[11px] font-bold mono-tabular"
                 />
               </label>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Capacity (p/min)
+              <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted">
+                <span className="flex-1">Capacity (p/min)</span>
                 <input
                   type="number"
                   value={selectedEdge.capacity}
                   onChange={(e) => updateEdge(selected!, { capacity: Number(e.target.value) })}
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
+                  className="field !max-w-[120px] text-[11px] font-bold mono-tabular"
                 />
               </label>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary cursor-pointer">
+              <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedEdge.is_open}
                   onChange={(e) => updateEdge(selected!, { is_open: e.target.checked })}
-                  className="w-3.5 h-3.5 accent-black"
+                  className="h-3.5 w-3.5 accent-[var(--od-ink)]"
                 />
                 Walkway open
               </label>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary cursor-pointer">
+              <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted cursor-pointer">
                 <input
                   type="checkbox"
                   checked={selectedEdge.is_emergency}
                   onChange={(e) => updateEdge(selected!, { is_emergency: e.target.checked })}
-                  className="w-3.5 h-3.5 accent-black"
+                  className="h-3.5 w-3.5 accent-[var(--od-ink)]"
                 />
                 Emergency corridor
               </label>
               <button
                 onClick={() => deleteEdge(selected!)}
-                className="btn-outline text-error w-full"
-                style={{ borderColor: 'currentColor' }}
+                className="btn btn-danger w-full"
               >
-                <Trash2 className="w-3.5 h-3.5" /> Delete walkway
+                <Trash2 className="h-3.5 w-3.5" /> Delete walkway
               </button>
             </div>
           )}
         </div>
 
-        <div className="flex items-center gap-sm px-md py-sm border border-outline-variant text-[10px] uppercase tracking-[0.16em] text-secondary">
-          <span>{venue.nodes.length} nodes</span>
-          <span>·</span>
-          <span>{venue.edges.length} walkways</span>
+        <div className="flex items-center gap-2 border border-od-line bg-od-panel px-4 py-2 text-[10px] uppercase tracking-[0.14em] text-od-muted mono-tabular">
+          <span className="text-od-ink">{venue.nodes.length}</span> nodes
+          <span className="text-od-line">·</span>
+          <span className="text-od-ink">{venue.edges.length}</span> walkways
         </div>
       </div>
     </div>
@@ -514,6 +507,7 @@ export default function VenueBuilderView() {
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeTone, setNoticeTone] = useState<'ok' | 'err'>('ok');
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -547,8 +541,10 @@ export default function VenueBuilderView() {
           `Imported '${result.venue.name}': ${result.venue.nodes.length} nodes, ` +
             `${result.venue.edges.length} walkways, confidence ${Math.round(result.confidence * 100)}%${flagged}.${notes}`,
         );
+        setNoticeTone('ok');
       } catch (e) {
         setNotice(e instanceof Error ? e.message : 'Blueprint import failed');
+        setNoticeTone('err');
       } finally {
         setImporting(false);
         if (fileRef.current) fileRef.current.value = '';
@@ -566,19 +562,21 @@ export default function VenueBuilderView() {
       const saved = existing ? await api.saveVenue(draft) : await api.createVenue(draft);
       setDraft(saved);
       setNotice(`Venue '${saved.id}' saved — back in the catalogue.`);
+      setNoticeTone('ok');
       await refreshCatalog();
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Save failed');
+      setNoticeTone('err');
     } finally {
       setSaving(false);
     }
   }, [draft, venues, refreshCatalog]);
 
   return (
-    <div className="space-y-lg">
-      <div className="flex flex-wrap items-center gap-md">
-        <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.2em] text-secondary">
-          Load venue
+    <div className="mx-auto max-w-6xl space-y-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted">
+          <span>Load venue</span>
           <select
             value={source}
             onChange={(e) => {
@@ -588,7 +586,7 @@ export default function VenueBuilderView() {
                 setSource(v.id);
               }
             }}
-            className="bg-background border border-primary px-md py-sm text-[11px] font-bold uppercase tracking-widest cursor-pointer"
+            className="field cursor-pointer"
           >
             {venues.map((v) => (
               <option key={v.id} value={v.id}>
@@ -612,9 +610,9 @@ export default function VenueBuilderView() {
             setSource(id);
             setNotice(null);
           }}
-          className="btn-outline"
+          className="btn btn-ghost"
         >
-          <SquarePlus className="w-3.5 h-3.5" /> New venue
+          <SquarePlus className="h-3.5 w-3.5" /> New venue
         </button>
         <input
           ref={fileRef}
@@ -627,29 +625,32 @@ export default function VenueBuilderView() {
             if (file) void importBlueprint(file);
           }}
         />
-        <button onClick={() => fileRef.current?.click()} disabled={importing} className="btn-outline">
-          <Upload className="w-3.5 h-3.5" />
+        <button onClick={() => fileRef.current?.click()} disabled={importing} className="btn btn-ghost">
+          <Upload className="h-3.5 w-3.5" />
           {importing ? 'Importing…' : 'Import blueprint'}
         </button>
-        <div className="ml-auto flex items-center gap-md">
-          {notice && <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-error">{notice}</span>}
-          <button onClick={save} disabled={saving || !draft} className="btn-primary">
-            <Save className="w-3.5 h-3.5" /> {saving ? 'Saving…' : 'Save venue'}
+        <div className="ml-auto flex items-center gap-3">
+          {notice && (
+            <span className={`text-[10px] uppercase tracking-[0.12em] font-bold ${noticeTone === 'ok' ? 'text-od-ok' : 'text-od-danger'}`}>
+              {notice}
+            </span>
+          )}
+          <button onClick={save} disabled={saving || !draft} className="btn btn-solid">
+            <Save className="h-3.5 w-3.5" /> {saving ? 'Saving…' : 'Save venue'}
           </button>
         </div>
       </div>
 
       {!draft ? (
-        <div className="border border-outline-variant px-md py-xl text-[11px] uppercase tracking-[0.16em] text-secondary">
+        <div className="blk px-4 py-10 text-center text-[11px] uppercase tracking-[0.16em] text-od-muted">
           No venues found in the catalogue.
         </div>
       ) : (
         <Builder venue={draft} onChange={(v) => setDraft(v)} />
       )}
-      <div className="text-[10px] uppercase tracking-[0.14em] text-secondary leading-relaxed">
-        Tip: every venue must contain at least one ENTRY and one EXIT / EMERGENCY_EXIT, stay
-        connected, and validate on save. A deliberately narrow corridor makes bottlenecks easy to
-        reproduce.
+      <div className="border-l-2 border-l-od-warn bg-od-panel px-4 py-3 text-[10px] uppercase tracking-[0.14em] leading-relaxed text-od-muted">
+        Every venue must contain at least one ENTRY and one EXIT / EMERGENCY_EXIT, stay connected, and
+        validate on save. A deliberately narrow corridor makes bottlenecks easy to reproduce.
       </div>
     </div>
   );

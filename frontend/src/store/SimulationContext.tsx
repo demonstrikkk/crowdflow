@@ -114,6 +114,8 @@ function compactFrame(frame: SimulationState): PlaybackFrame {
 function applyTheme(theme: ThemeMode) {
   document.documentElement.classList.toggle('dark', theme === 'dark');
   document.documentElement.style.colorScheme = theme;
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'dark' ? '#0a0c0e' : '#eef0f2');
 }
 
 export function SimulationProvider({ children }: { children: ReactNode }) {
@@ -132,7 +134,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<ThemeMode>(() => {
     const saved = localStorage.getItem('cf-theme');
     if (saved === 'dark' || saved === 'light') return saved;
-    return 'light';
+    return 'dark';
   });
   const [guided, setGuided] = useState<GuidedStep>('idle');
   const [buffer, setBuffer] = useState<PlaybackFrame[]>([]);
@@ -245,7 +247,20 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const selectVenue = useCallback(
     (id: string) => {
       const v = venues.find((x) => x.id === id) ?? null;
-      if (v) setVenue(v);
+      if (v) {
+        setVenue(v);
+        // switching venue invalidates any running simulation
+        setSimId(null);
+        setSim(null);
+        setCfSimId(null);
+        setCfSim(null);
+        setOptimization(null);
+        setBuffer([]);
+        setFrameIndex(-1);
+        setSeeking(false);
+        lastBufferedMin.current = null;
+        setGuided('idle');
+      }
     },
     [venues],
   );

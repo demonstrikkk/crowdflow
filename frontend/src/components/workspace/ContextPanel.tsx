@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
 import type { ElementState, Intervention, SimulationState, VenueModel } from '../../lib/types';
 import { riskState } from '../../lib/format';
 import type { Mode, Selection } from '../../lib/selection';
@@ -23,6 +24,7 @@ export interface PanelProps {
   onDiscardCf: () => void;
   onApplyCf: () => void;
   runCounterfactual: (intervention: Intervention) => Promise<string | null>;
+  onClosePanel?: () => void;
 }
 
 function fmt(n: number | undefined | null, digits = 0) {
@@ -30,13 +32,50 @@ function fmt(n: number | undefined | null, digits = 0) {
   return n.toLocaleString(undefined, { maximumFractionDigits: digits });
 }
 
+function Section({
+  n,
+  title,
+  right,
+  children,
+}: {
+  n: string;
+  title: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section>
+      <div className="flex items-center gap-2 pb-2">
+        <span className="font-mono text-[9px] font-bold text-od-danger">{n}</span>
+        <span className="sec-label">{title}</span>
+        <span className="h-px flex-1 bg-od-line" />
+        {right}
+      </div>
+      {children}
+    </section>
+  );
+}
+
 function RiskBadge({ risk }: { risk: string }) {
   const s = riskState(risk as never);
   return (
-    <span className={`chip ${s === 'danger' ? 'is-danger' : s === 'warn' ? 'is-warn' : ''}`}>
+    <span className={`chip ${s === 'danger' ? 'is-danger' : s === 'warn' ? 'is-warn' : 'is-ok'}`}>
       <span className={`status-dot ${s === 'danger' ? 'is-danger' : s === 'warn' ? 'is-warn' : 'is-ok'}`} />
       {risk}
     </span>
+  );
+}
+
+function MetricGrid({ items }: { items: [string, React.ReactNode][] }) {
+  return (
+    <div className="grid grid-cols-3 gap-x-3 gap-y-2.5 border-t border-od-line pt-2.5">
+      {items.map(([label, value]) => (
+        <div key={label}>
+          <div className="meta">{label}</div>
+          <div className="num mt-0.5 text-od-ink">{value}</div>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -61,70 +100,39 @@ function ObjectDetail({
       : `${edge?.source.replace(/_/g, ' ')} → ${edge?.destination.replace(/_/g, ' ')}`;
   const type = selected.kind === 'node' ? (node?.type ?? 'NODE') : 'CORRIDOR';
 
+  const metrics: [string, React.ReactNode][] = [];
+  if (st) {
+    metrics.push(
+      ['People', fmt(st.people)],
+      ['Queue', fmt(st.queue)],
+      ['Density', fmt(st.density, 2)],
+      ['Flow/min', fmt(st.flow_per_min)],
+      ['Utilisation', `${fmt(st.utilisation * 100, 0)}%`],
+      ['Capacity', fmt(st.capacity)],
+    );
+    if (st.time_to_critical_min != null) {
+      metrics.push(['TTC', <span key="ttc" className="text-od-warn">{st.time_to_critical_min.toFixed(1)} min</span>]);
+    }
+  }
+
   return (
-    <div className="space-y-2.5">
-      <div>
-        <div className="meta">Selected</div>
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-display text-[13px] font-bold uppercase tracking-[0.08em] text-od-ink">{title}</span>
-          {st && <RiskBadge risk={st.risk} />}
+    <Section n="03" title="Selected">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="num truncate text-[13px] font-bold uppercase tracking-[0.04em] text-od-ink">{title}</div>
+          <div className="meta mt-0.5">{type}</div>
         </div>
-        <div className="text-[10px] uppercase tracking-[0.18em] text-od-muted">{type}</div>
+        {st && <RiskBadge risk={st.risk} />}
       </div>
-
-      {st && (
-        <div className="grid grid-cols-3 gap-x-3 gap-y-2 border-t border-od-line pt-2.5">
-          <div>
-            <div className="meta">People</div>
-            <div className="num">{fmt(st.people)}</div>
-          </div>
-          <div>
-            <div className="meta">Queue</div>
-            <div className="num">{fmt(st.queue)}</div>
-          </div>
-          <div>
-            <div className="meta">Density</div>
-            <div className="num">{fmt(st.density, 2)}</div>
-          </div>
-          <div>
-            <div className="meta">Flow/min</div>
-            <div className="num">{fmt(st.flow_per_min)}</div>
-          </div>
-          <div>
-            <div className="meta">Utilisation</div>
-            <div className="num">{fmt(st.utilisation * 100, 0)}%</div>
-          </div>
-          <div>
-            <div className="meta">Capacity</div>
-            <div className="num">{fmt(st.capacity)}</div>
-          </div>
-          {st.time_to_critical_min != null && (
-            <div className="col-span-3">
-              <div className="meta">Time to critical</div>
-              <div className="num text-od-warn">{st.time_to_critical_min.toFixed(1)} min</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {selected.kind === 'edge' && edge && (
-        <div className="border-t border-od-line pt-2.5">
-          <div className="meta">Corridor</div>
-          <div className="num">
-            {edge.length_m} m × {edge.width_m} m{edge.is_open ? ' · open' : ' · closed'}
-          </div>
-        </div>
-      )}
-      {selected.kind === 'node' && node && (
-        <div className="border-t border-od-line pt-2.5">
-          <div className="meta">Type</div>
-          <div className="num">
-            {node.type}
-            {node.capacity ? ` · capacity ${node.capacity}` : ''}
-          </div>
-        </div>
-      )}
-    </div>
+      {metrics.length > 0 && <MetricGrid items={metrics} />}
+      <div className="mt-2.5 border-t border-od-line pt-2.5 text-[10px] text-od-muted mono-tabular">
+        {selected.kind === 'edge' && edge
+          ? `${edge.length_m} m × ${edge.width_m} m · ${edge.is_open ? 'open' : 'closed'}`
+          : node
+            ? `${node.type}${node.capacity ? ` · capacity ${node.capacity}` : ''}`
+            : '—'}
+      </div>
+    </Section>
   );
 }
 
@@ -132,66 +140,41 @@ function SystemReadout({ sim, onSelect }: { sim: SimulationState | null; onSelec
   const m = sim?.metrics;
   const top = sim?.bottlenecks[0];
   return (
-    <div className="space-y-3">
-      <div>
-        <div className="meta">System</div>
-        <div className="flex items-baseline justify-between">
-          <span className="font-display text-[13px] font-bold uppercase tracking-[0.08em] text-od-ink">
-            {sim?.phase ?? 'No simulation'}
-          </span>
-          {m && <RiskBadge risk={m.risk_level} />}
-        </div>
-      </div>
+    <Section n="01" title="System" right={m && <RiskBadge risk={m.risk_level} />}>
       {m && (
-        <div className="grid grid-cols-3 gap-x-3 gap-y-2 border-t border-od-line pt-2.5">
-          <div>
-            <div className="meta">In venue</div>
-            <div className="num">{fmt(m.in_venue)}</div>
-          </div>
-          <div>
-            <div className="meta">Flow/min</div>
-            <div className="num">{fmt(m.flow_per_min)}</div>
-          </div>
-          <div>
-            <div className="meta">Density</div>
-            <div className="num">{fmt(m.global_density, 2)}</div>
-          </div>
-          <div>
-            <div className="meta">Queue</div>
-            <div className="num">{fmt(m.queue_total)}</div>
-          </div>
-          <div>
-            <div className="meta">Bottlenecks</div>
-            <div className="num">{fmt(m.bottleneck_count)}</div>
-          </div>
-          <div>
-            <div className="meta">Avg travel</div>
-            <div className="num">{fmt(m.avg_travel_time_min, 1)}m</div>
-          </div>
-        </div>
+        <MetricGrid
+          items={[
+            ['In venue', fmt(m.in_venue)],
+            ['Flow/min', fmt(m.flow_per_min)],
+            ['Density', fmt(m.global_density, 2)],
+            ['Queue', fmt(m.queue_total)],
+            ['Bottlenecks', fmt(m.bottleneck_count)],
+            ['Avg travel', `${fmt(m.avg_travel_time_min, 1)}m`],
+          ]}
+        />
       )}
 
       {top && (
         <button
-          className="w-full border border-od-line hover:border-od-warn text-left px-2.5 py-2 cursor-pointer"
+          className="mt-3 w-full border border-od-line border-l-2 border-l-od-warn text-left px-2.5 py-2 cursor-pointer transition-colors hover:border-od-ink"
           onClick={() => onSelect({ kind: 'edge', id: top.location })}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[9px] uppercase tracking-[0.16em] text-od-muted">Top bottleneck</span>
+            <span className="meta">Top bottleneck</span>
             <RiskBadge risk={top.current_risk} />
           </div>
-          <div className="num mt-1">{top.location}</div>
-          <div className="text-[10px] text-od-muted mt-1 leading-snug">{top.explanation}</div>
+          <div className="num mt-1 text-od-ink">{top.location}</div>
+          <div className="text-[10px] leading-snug text-od-muted mt-1">{top.explanation}</div>
         </button>
       )}
 
       {sim?.recommended_action && (
-        <div className="border border-od-warn bg-od-warn-soft px-2.5 py-2">
+        <div className="mt-3 border border-od-warn bg-od-warn-soft px-2.5 py-2">
           <div className="meta text-od-warn">Recommended action</div>
           <div className="text-[11px] text-od-ink mt-0.5 leading-snug">{sim.recommended_action}</div>
         </div>
       )}
-    </div>
+    </Section>
   );
 }
 
@@ -208,29 +191,24 @@ function BottleneckRegister({
     return list;
   }, [sim?.bottlenecks]);
   return (
-    <div className="space-y-3">
-      <div>
-        <div className="meta">Register</div>
-        <div className="font-display text-[13px] font-bold uppercase tracking-[0.08em] text-od-ink">
-          Bottlenecks · {sorted.length}
-        </div>
-      </div>
+    <Section n="02" title={`Bottlenecks · ${sorted.length}`}>
       {sorted.length === 0 && <p className="text-[11px] text-od-muted">No congestion detected at this instant.</p>}
       <div className="space-y-1.5">
         {sorted.map((b) => {
           const s = riskState(b.current_risk as never);
           const sel: Selection = { kind: b.kind, id: b.location };
+          const accent = s === 'danger' ? 'border-l-od-danger' : s === 'warn' ? 'border-l-od-warn' : 'border-l-od-ok';
           return (
             <button
               key={b.id}
-              className="w-full border border-od-line hover:border-od-ink text-left px-2.5 py-2 cursor-pointer"
+              className={`w-full border border-od-line border-l-2 ${accent} text-left px-2.5 py-2 cursor-pointer transition-colors hover:border-od-ink`}
               onClick={() => onSelect(sel)}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] uppercase tracking-[0.12em] text-od-muted">{b.kind}</span>
+                <span className="meta">{b.kind}</span>
                 <span className={`status-dot ${s === 'danger' ? 'is-danger' : s === 'warn' ? 'is-warn' : 'is-ok'}`} />
               </div>
-              <div className="num mt-0.5 truncate">{b.location}</div>
+              <div className="num mt-0.5 truncate text-od-ink">{b.location}</div>
               <div className="flex justify-between text-[10px] text-od-muted mt-1 mono-tabular">
                 <span>util {fmt(b.capacity_utilisation * 100, 0)}%</span>
                 <span>queue {fmt(b.queue)}</span>
@@ -240,7 +218,7 @@ function BottleneckRegister({
           );
         })}
       </div>
-    </div>
+    </Section>
   );
 }
 
@@ -270,105 +248,100 @@ function InterveneComposer({
   const rd = drafts?.redirect ?? null;
 
   return (
-    <div className="space-y-3">
-      <div>
-        <div className="meta">Composer</div>
-        <div className="font-display text-[13px] font-bold uppercase tracking-[0.08em] text-od-ink">Intervention</div>
-      </div>
-
-      <div className="border-t border-od-line pt-2.5">
-        <div className="meta mb-1.5">Corridors</div>
-        {closed.size === 0 && <p className="text-[11px] text-od-muted mb-1.5">Select a corridor on the canvas, then close it here.</p>}
-        {[...closed].map((key) => (
-          <div key={key} className="flex items-center gap-2 border border-od-danger bg-od-danger-soft px-2 py-1.5 mb-1.5">
-            <span className="flex-1 text-[10px] uppercase tracking-[0.1em] text-od-ink truncate">{key}</span>
-            <button className="btn btn-danger" onClick={() => onImplementClose(key)}>
-              CLOSE
-            </button>
-          </div>
-        ))}
-      </div>
-
-      {selected?.kind === 'edge' && (
-        <button
-          className="btn btn-danger w-full"
-          onClick={() => {
-            onToggleClose(selected.id);
-            onImplementClose(selected.id);
-          }}
-        >
-          CLOSE SELECTED CORRIDOR
-        </button>
-      )}
-
-      <div className="border-t border-od-line pt-2.5">
-        <div className="meta mb-1.5">Redirect a gate</div>
-        <div className="flex flex-wrap gap-1">
-          {gates.map((g) => (
-            <button
-              key={g.id}
-              className={`chip ${rd?.from === g.id ? 'is-active' : ''}`}
-              onClick={() => {
-                if (rd?.from === g.id) onSetRedirect(null);
-                else {
-                  const target = venue?.nodes.find((n) => n.type === 'EXIT');
-                  if (target) onSetRedirect({ from: g.id, to: target.id, pct: 20 });
-                }
-              }}
-            >
-              {g.id.replace(/_/g, ' ')}
-            </button>
+    <div className="space-y-5">
+      <Section n="01" title="Intervention">
+        <div className="border-t border-od-line pt-2.5">
+          <div className="meta mb-1.5">Corridors</div>
+          {closed.size === 0 && <p className="text-[11px] text-od-muted mb-1.5">Select a corridor on the canvas, then close it here.</p>}
+          {[...closed].map((key) => (
+            <div key={key} className="mb-1.5 flex items-center gap-2 border border-od-danger bg-od-danger-soft px-2 py-1.5">
+              <span className="flex-1 truncate text-[10px] uppercase tracking-[0.1em] text-od-ink">{key}</span>
+              <button className="btn btn-danger" onClick={() => onImplementClose(key)}>
+                CLOSE
+              </button>
+            </div>
           ))}
         </div>
-        {rd && (
-          <div className="mt-2 border border-od-warn bg-od-warn-soft px-2.5 py-2 space-y-2">
-            <div className="num truncate">
-              {rd.from.replace(/_/g, ' ')} → {rd.to.replace(/_/g, ' ')}
-            </div>
-            <label className="block">
-              <span className="meta">Reroute share</span>
-              <input
-                type="range"
-                min={5}
-                max={70}
-                step={5}
-                value={rd.pct}
-                onChange={(e) => onSetRedirect({ ...rd, pct: Number(e.target.value) })}
-                className="slider w-full mt-1"
-              />
-              <span className="num">{rd.pct}%</span>
-            </label>
-            <div className="flex gap-1.5">
-              <button className="btn btn-solid flex-1" onClick={() => onImplementRedirect(rd)}>
-                IMPLEMENT
-              </button>
-              <button className="btn btn-ghost" onClick={() => onSetRedirect(null)}>
-                CLEAR
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
 
-      <div className="border-t border-od-line pt-2.5">
-        <div className="meta mb-1.5">Emergency</div>
+        {selected?.kind === 'edge' && (
+          <button
+            className="btn btn-danger w-full"
+            onClick={() => {
+              onToggleClose(selected.id);
+              onImplementClose(selected.id);
+            }}
+          >
+            CLOSE SELECTED CORRIDOR
+          </button>
+        )}
+
+        <div className="mt-3 border-t border-od-line pt-2.5">
+          <div className="meta mb-1.5">Redirect a gate</div>
+          <div className="flex flex-wrap gap-1">
+            {gates.map((g) => (
+              <button
+                key={g.id}
+                className={`chip ${rd?.from === g.id ? 'is-active' : ''}`}
+                onClick={() => {
+                  if (rd?.from === g.id) onSetRedirect(null);
+                  else {
+                    const target = venue?.nodes.find((n) => n.type === 'EXIT');
+                    if (target) onSetRedirect({ from: g.id, to: target.id, pct: 20 });
+                  }
+                }}
+              >
+                {g.id.replace(/_/g, ' ')}
+              </button>
+            ))}
+          </div>
+          {rd && (
+            <div className="mt-2 space-y-2 border border-od-warn bg-od-warn-soft px-2.5 py-2">
+              <div className="num truncate text-od-ink">
+                {rd.from.replace(/_/g, ' ')} → {rd.to.replace(/_/g, ' ')}
+              </div>
+              <label className="block">
+                <span className="meta">Reroute share</span>
+                <input
+                  type="range"
+                  min={5}
+                  max={70}
+                  step={5}
+                  value={rd.pct}
+                  onChange={(e) => onSetRedirect({ ...rd, pct: Number(e.target.value) })}
+                  className="slider w-full mt-1"
+                />
+                <span className="num text-od-ink">{rd.pct}%</span>
+              </label>
+              <div className="flex gap-1.5">
+                <button className="btn btn-solid flex-1" onClick={() => onImplementRedirect(rd)}>
+                  IMPLEMENT
+                </button>
+                <button className="btn btn-ghost" onClick={() => onSetRedirect(null)}>
+                  CLEAR
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </Section>
+
+      <Section n="02" title="Emergency">
         <button
           className="btn btn-danger w-full"
           onClick={() => onEmergency(!(sim?.emergency_active ?? false))}
         >
           {sim?.emergency_active ? 'CANCEL EVACUATION' : 'DECLARE EVACUATION'}
         </button>
-      </div>
+      </Section>
 
       {sim && sim.interventions_applied.length > 0 && (
-        <div className="border-t border-od-line pt-2.5">
-          <div className="meta mb-1">Applied</div>
+        <Section n="03" title={`Applied · ${sim.interventions_applied.length}`}>
           {sim.interventions_applied.map((i) => (
-            <div key={i.id} className="text-[10px] text-od-muted uppercase tracking-[0.1em] py-0.5 border-b border-od-line last:border-0">
+            <div key={i.id} className="border-b border-od-line py-1 text-[10px] uppercase tracking-[0.1em] text-od-muted last:border-0">
               {i.description}
             </div>
           ))}
-        </div>
+        </Section>
       )}
     </div>
   );
@@ -430,12 +403,7 @@ function ConditionsComposer({
   const hasConditions = !!(sim?.incident || sim?.weather);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="meta">Conditions</div>
-        {hasConditions && <span className="chip is-danger text-[8px]">active</span>}
-      </div>
-
+    <Section n="03" title="Conditions" right={hasConditions ? <span className="chip is-danger text-[8px]">active</span> : undefined}>
       <div className="border-t border-od-line pt-2.5 space-y-2">
         <div className="meta">Incident</div>
         <div className="flex gap-1">
@@ -451,7 +419,7 @@ function ConditionsComposer({
         </div>
         <label className="block">
           <span className="meta">Location</span>
-          <span className="num block">{location.replace(/_/g, ' ')}</span>
+          <span className="num block text-od-ink">{location.replace(/_/g, ' ')}</span>
           {selected?.kind !== 'node' && <span className="text-[9px] text-od-muted">(select a node on the canvas to aim it)</span>}
         </label>
         <label className="block">
@@ -467,7 +435,7 @@ function ConditionsComposer({
         </button>
       </div>
 
-      <div className="border-t border-od-line pt-2.5 space-y-2">
+      <div className="mt-3 border-t border-od-line pt-2.5 space-y-2">
         <div className="meta">Weather</div>
         <div className="flex flex-wrap gap-1">
           {(['CLEAR', 'FOG', 'HEAVY_RAIN', 'HAIL', 'HEAT'] as const).map((w) => (
@@ -488,7 +456,7 @@ function ConditionsComposer({
           APPLY WEATHER
         </button>
       </div>
-    </div>
+    </Section>
   );
 }
 
@@ -503,16 +471,10 @@ function CompareReadout({ sim, cfSim, cfError }: { sim: SimulationState | null; 
     ['Bottlenecks', base?.bottleneck_count ?? null, alt?.bottleneck_count ?? null, (a, b) => a <= b],
   ];
   return (
-    <div className="space-y-3">
-      <div>
-        <div className="meta">Comparison</div>
-        <div className="font-display text-[13px] font-bold uppercase tracking-[0.08em] text-od-ink">
-          Baseline vs Counterfactual
-        </div>
-      </div>
+    <Section n="01" title="Comparison">
       {cfError && <p className="text-[11px] text-od-danger">{cfError}</p>}
       {!cfSim && !cfError && (
-        <p className="text-[11px] text-od-muted leading-relaxed">
+        <p className="text-[11px] leading-relaxed text-od-muted">
           Draft an intervention in INTERVENE and run it as a counterfactual to see it here side by side.
         </p>
       )}
@@ -531,8 +493,8 @@ function CompareReadout({ sim, cfSim, cfError }: { sim: SimulationState | null; 
               return (
                 <div key={label} className="contents">
                   <span className="text-od-muted pt-0.5">{label}</span>
-                  <span className="num text-right">{fmt(an, 1)}</span>
-                  <span className="num text-right">{fmt(bn, 1)}</span>
+                  <span className="num text-right text-od-ink">{fmt(an, 1)}</span>
+                  <span className="num text-right text-od-ink">{fmt(bn, 1)}</span>
                   <span className={`num text-right ${delta == null ? '' : good ? 'text-od-ok' : 'text-od-danger'}`}>
                     {delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`}
                   </span>
@@ -540,65 +502,73 @@ function CompareReadout({ sim, cfSim, cfError }: { sim: SimulationState | null; 
               );
             })}
           </div>
-          <div className="mt-2 pt-2 border-t border-od-line">
+          <div className="mt-2 border-t border-od-line pt-2">
             <div className="meta mb-1">Clearance time</div>
-            <div className="num">
-              {fmt(base?.clearance_time_min, 1)}m → {fmt(alt?.clearance_time_min, 1)}m
+            <div className="num text-od-ink">
+              {fmt(base?.clearance_time_min, 1)}m <span className="text-od-muted">→</span> {fmt(alt?.clearance_time_min, 1)}m
             </div>
           </div>
         </div>
       )}
-    </div>
+    </Section>
   );
 }
 
 export default function ContextPanel(props: PanelProps) {
   const { mode, sim, selected, onSelect, guidedCta } = props;
   return (
-    <aside className="w-80 shrink-0 hidden lg:flex flex-col border-l border-od-line bg-od-panel">
-      <div className="flex-1 overflow-y-auto px-3 py-3 space-y-4">
+    <aside className="hidden w-80 shrink-0 flex-col border-l border-od-line bg-od-panel lg:flex">
+      <div className="flex shrink-0 items-center justify-between border-b border-od-line px-3 py-2">
+        <span className="sec-label">
+          {mode === 'compare' ? 'Outcome' : mode === 'intervene' ? 'Intervention' : mode === 'investigate' ? 'Diagnostics' : 'System'}
+        </span>
+        {props.onClosePanel && (
+          <button
+            onClick={props.onClosePanel}
+            className="cursor-pointer text-od-muted transition-colors hover:text-od-ink"
+            aria-label="Collapse context panel"
+            title="Collapse — keep the venue in focus"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+      <div className="flex-1 space-y-5 overflow-y-auto px-3 py-3">
         {mode === 'intervene' ? (
-          <div className="space-y-4">
+          <>
             <InterveneComposer {...props} />
-            <div className="border-t border-od-line pt-3">
-              <ConditionsComposer sim={sim} selected={selected} onIntervention={props.onIntervention} />
-            </div>
-          </div>
+            <ConditionsComposer sim={sim} selected={selected} onIntervention={props.onIntervention} />
+          </>
         ) : mode === 'compare' ? (
           <CompareReadout sim={sim} cfSim={props.cfSim} cfError={props.cfError} />
         ) : mode === 'investigate' ? (
-          <div className="space-y-4">
+          <>
             <BottleneckRegister sim={sim} onSelect={onSelect} />
-            {selected && (
-              <div className="border-t border-od-line pt-3">
-                <ObjectDetail sim={sim} venue={props.venue} selected={selected} />
-              </div>
-            )}
-          </div>
+            {selected && <ObjectDetail sim={sim} venue={props.venue} selected={selected} />}
+          </>
         ) : (
-          <div className="space-y-4">
+          <>
             {guidedCta && (
               <button
-                className="w-full border border-od-warn bg-od-warn-soft text-left px-2.5 py-2.5 cursor-pointer hover:bg-od-warn-soft"
+                className="w-full border border-od-warn border-l-2 border-l-od-warn bg-od-warn-soft text-left px-2.5 py-2.5 cursor-pointer transition-colors hover:bg-od-warn-soft"
                 onClick={guidedCta}
               >
                 <div className="meta text-od-warn">Action required</div>
-                <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-od-ink mt-0.5">
+                <div className="mt-0.5 text-[12px] font-bold uppercase tracking-[0.06em] text-od-ink">
                   Bottleneck forming — see what we can change
                 </div>
               </button>
             )}
             <SystemReadout sim={sim} onSelect={onSelect} />
-            {selected && (
-              <div className="border-t border-od-line pt-3">
-                <ObjectDetail sim={sim} venue={props.venue} selected={selected} />
-              </div>
-            )}
-          </div>
+            {selected && <ObjectDetail sim={sim} venue={props.venue} selected={selected} />}
+          </>
         )}
       </div>
-      <div className="border-t border-od-line px-3 py-2 text-[9px] uppercase tracking-[0.18em] text-od-muted">
-        {mode} mode
+      <div className="flex shrink-0 items-center justify-between border-t border-od-line px-3 py-2">
+        <span className="sec-label">{mode} mode</span>
+        {sim && (
+          <span className="sec-label mono-tabular">t=<span className="text-od-ink">{sim.t_min.toFixed(1)}m</span></span>
+        )}
       </div>
     </aside>
   );

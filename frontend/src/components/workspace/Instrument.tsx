@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronLeft } from 'lucide-react';
 import { useSimulation } from '../../store/SimulationContext';
 import type { Mode, Selection, WorkspaceView } from '../../lib/selection';
+import { edgeKey as edgeKeyOf } from '../../lib/selection';
 import type { ExternalEnvironment, Intervention } from '../../lib/types';
 import { api } from '../../lib/api';
-import InstrumentCanvas, { type CanvasScope, type DraftState } from './InstrumentCanvas';
+import InstrumentCanvas, { type CanvasScope, type DraftState, type SpatialAction } from './InstrumentCanvas';
 import TopBar from './TopBar';
 import ContextPanel from './ContextPanel';
 import Timeline from './Timeline';
@@ -24,6 +26,20 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
   const [drafts, setDrafts] = useState<DraftState | null>(null);
   const [env, setEnv] = useState<ExternalEnvironment | null>(null);
   const [scope, setScope] = useState<CanvasScope>('venue');
+  const [panelOpen, setPanelOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('cf-panel-open') !== 'false';
+    } catch {
+      return true;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem('cf-panel-open', String(panelOpen));
+    } catch {
+      /* storage unavailable */
+    }
+  }, [panelOpen]);
   const draftRef = useRef(drafts);
   draftRef.current = drafts;
 
@@ -104,6 +120,50 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
     [s],
   );
 
+  // spatial actions issued from the venue canvas itself
+  const onSpatialAction = useCallback(
+    (action: SpatialAction) => {
+      const sel = action.selection;
+      const node = sel.kind === 'node' ? s.venue?.nodes.find((n) => n.id === sel.id) ?? null : null;
+      const incidentEdges =
+        sel.kind === 'node'
+          ? (s.venue?.edges.filter((e) => e.source === sel.id || e.destination === sel.id).map((e) => edgeKeyOf(e.source, e.destination)) ?? [])
+          : [];
+
+      switch (action.type) {
+        case 'close': {
+          const targets = sel.kind === 'edge' ? [sel.id] : incidentEdges;
+          setDrafts((d) => {
+            const cur = d?.closedEdgeIds ?? [];
+            const next = [...new Set([...cur, ...targets])];
+            return { closedEdgeIds: next, redirect: d?.redirect ?? null };
+          });
+          break;
+        }
+        case 'open': {
+          const targets = sel.kind === 'edge' ? [sel.id] : incidentEdges;
+          setDrafts((d) => ({
+            closedEdgeIds: (d?.closedEdgeIds ?? []).filter((k) => !targets.includes(k)),
+            redirect: d?.redirect ?? null,
+          }));
+          break;
+        }
+        case 'redirect': {
+          if (node && node.type === 'ENTRY') {
+            const target = s.venue?.nodes.find((n) => n.type === 'EXIT');
+            if (target) setDrafts((d) => ({ closedEdgeIds: d?.closedEdgeIds ?? [], redirect: { from: node.id, to: target.id, pct: 20 } }));
+          }
+          break;
+        }
+        case 'incident': {
+          setSelected(sel);
+          break;
+        }
+      }
+    },
+    [s],
+  );
+
   const guidedCta = useCallback(() => {
     const loc = topBottleneck?.location;
     onMode('intervene');
@@ -137,6 +197,18 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
     }
   }, [s, onMode]);
 
+  // auto-offer: the system proposes testing an alternative when a bottleneck forms
+  const testAlternative = useCallback(() => {
+    const loc = topBottleneck?.location;
+    if (!loc) return;
+    const intervention = makeIntervention({
+      type: 'CLOSE_CORRIDOR',
+      description: `Close ${loc} (alternative)`,
+      parameters: { edge: loc },
+    });
+    void s.runCounterfactual(intervention).then(() => onMode('compare'));
+  }, [topBottleneck, s, onMode]);
+
   const singleCanvas = (interactive: boolean, showDrafts: boolean) => (
     <InstrumentCanvas
       sim={s.displayedSim}
@@ -153,6 +225,7 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
       scope={scope}
       onScope={interactive ? setScope : undefined}
       onRefreshEnvironment={interactive ? refreshEnvironment : undefined}
+      onSpatialAction={interactive && mode === 'intervene' ? onSpatialAction : undefined}
     />
   );
 
@@ -172,19 +245,20 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
 
       <div className="flex min-h-0 flex-1">
         <div className="relative min-w-0 flex-1">
-          {mode === 'compare' ? (
-            <div className="absolute inset-0 grid grid-cols-2 divide-x divide-od-line">
+          {mode === 'compare' ? (            <div className="absolute inset-0 grid grid-cols-2 divide-x divide-od-line">
               <div className="relative min-w-0">
-                <div className="absolute top-2 left-3 z-10 text-[9px] uppercase tracking-[0.22em] text-od-muted bg-od-panel px-1.5 py-0.5">
-                  Baseline
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 border border-od-line bg-od-panel px-2 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-od-soft" />
+                  <span className="sec-label">Baseline</span>
                 </div>
                 <div className="absolute inset-0">
                   <InstrumentCanvas sim={s.displayedSim} venue={s.venue} mode="compare" selected={null} interactive={false} showAgents showLabels environment={env} scope={scope} />
                 </div>
               </div>
               <div className="relative min-w-0">
-                <div className="absolute top-2 left-3 z-10 text-[9px] uppercase tracking-[0.22em] text-od-warn bg-od-panel px-1.5 py-0.5">
-                  Counterfactual
+                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 border border-od-warn bg-od-panel px-2 py-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-od-warn" />
+                  <span className="sec-label">Counterfactual</span>
                 </div>
                 <div className="absolute inset-0">
                   <InstrumentCanvas sim={s.cfSim} venue={s.venue} mode="compare" selected={null} interactive={false} showAgents showLabels environment={env} scope={scope} />
@@ -203,19 +277,32 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
             />
           )}
 
+          {mode === 'simulate' && topBottleneck && !s.cfSimId && (
+            <div className="absolute top-3 left-3 z-10 flex items-center gap-3 border border-od-warn bg-od-panel px-3 py-2 shadow-[0_16px_48px_-24px_rgba(0,0,0,0.7)]">
+              <span className="status-dot is-warn" />
+              <div>
+                <div className="sec-label">Bottleneck · {topBottleneck.location}</div>
+                <div className="num mt-0.5 text-[12px] font-bold text-od-ink">{topBottleneck.explanation}</div>
+              </div>
+              <button className="btn btn-solid" onClick={testAlternative}>
+                TEST ALTERNATIVE
+              </button>
+            </div>
+          )}
           {mode === 'intervene' && !s.cfSimId && (
             <button
               className="absolute top-3 right-3 z-10 btn btn-solid"
               onClick={runAsCounterfactual}
               disabled={!drafts?.redirect && (drafts?.closedEdgeIds.length ?? 0) === 0}
             >
-              RUN AS COUNTERFACTUAL ▶
+              RUN AS COUNTERFACTUAL
             </button>
           )}
 
           {!s.sim && !s.cfSimId && (
             <div className="absolute inset-0 z-20">
               <EmptyState
+                venueName={s.venue?.name ?? null}
                 onLoad={() => void s.runSimulation()}
                 onBuild={() => onMode('scenarios')}
                 onImport={() => onMode('venues')}
@@ -225,26 +312,39 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
           )}
         </div>
 
-        <ContextPanel
-          mode={mode}
-          sim={s.displayedSim}
-          venue={s.venue}
-          selected={selected}
-          onSelect={setSelected}
-          guidedCta={mode === 'simulate' && s.guided === 'bottleneck' ? guidedCta : null}
-          drafts={drafts}
-          onToggleClose={onToggleClose}
-          onImplementClose={onImplementClose}
-          onSetRedirect={onSetRedirect}
-          onImplementRedirect={onImplementRedirect}
-          onEmergency={onEmergency}
-          onIntervention={(i) => void s.applyIntervention(i)}
-          cfSim={s.cfSim}
-          cfError={s.cfError}
-          onDiscardCf={s.discardCounterfactual}
-          onApplyCf={() => void s.applyCounterfactual()}
-          runCounterfactual={s.runCounterfactual}
-        />
+        {panelOpen ? (
+          <ContextPanel
+            mode={mode}
+            sim={s.displayedSim}
+            venue={s.venue}
+            selected={selected}
+            onSelect={setSelected}
+            guidedCta={mode === 'simulate' && s.guided === 'bottleneck' ? guidedCta : null}
+            drafts={drafts}
+            onToggleClose={onToggleClose}
+            onImplementClose={onImplementClose}
+            onSetRedirect={onSetRedirect}
+            onImplementRedirect={onImplementRedirect}
+            onEmergency={onEmergency}
+            onIntervention={(i) => void s.applyIntervention(i)}
+            cfSim={s.cfSim}
+            cfError={s.cfError}
+            onDiscardCf={s.discardCounterfactual}
+            onApplyCf={() => void s.applyCounterfactual()}
+            runCounterfactual={s.runCounterfactual}
+            onClosePanel={() => setPanelOpen(false)}
+          />
+        ) : (
+          <button
+            onClick={() => setPanelOpen(true)}
+            className="hidden lg:flex w-8 shrink-0 flex-col items-center justify-center gap-2 border-l border-od-line bg-od-panel text-od-muted hover:text-od-ink cursor-pointer"
+            aria-label="Show context panel"
+            title="Show context panel"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            <span className="[writing-mode:vertical-rl] text-[9px] uppercase tracking-[0.22em]">Context</span>
+          </button>
+        )}
       </div>
 
       <Timeline

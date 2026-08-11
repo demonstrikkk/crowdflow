@@ -22,28 +22,40 @@ function DistEditor({
   const ok = Math.abs(total - 1) < 1e-6 && Object.keys(value).length > 0;
 
   return (
-    <div className="border border-outline-variant">
-      <div className="flex items-center justify-between px-md py-sm bg-surface-container-low grid-line-bottom">
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em]">{title}</span>
-        <span className={`text-[10px] font-bold mono-tabular ${ok ? 'text-primary' : 'text-error'}`}>
+    <div className="blk">
+      <div className="blk-hd">
+        <span className="sec-label">{title}</span>
+        <span className={`chip ${ok ? 'is-ok' : 'is-danger'} mono-tabular`}>
           Σ {total.toFixed(3)}
         </span>
       </div>
-      <div className="px-md py-md space-y-sm">
-        {options.map((o) => (
-          <label key={o.id} className="flex items-center gap-sm text-[10px] uppercase tracking-[0.14em] text-secondary">
-            <span className="w-24 truncate">{o.label}</span>
-            <input
-              type="number"
-              min={0}
-              max={1}
-              step={0.01}
-              value={value[o.id] ?? 0}
-              onChange={(e) => set(o.id, Math.max(0, Number(e.target.value)))}
-              className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
-            />
-          </label>
-        ))}
+      <div className="space-y-2 px-4 py-3">
+        {options.map((o) => {
+          const share = value[o.id] ?? 0;
+          return (
+            <label key={o.id} className="block">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-od-muted">
+                <span className="w-24 truncate" title={o.label}>{o.label}</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={share}
+                  onChange={(e) => set(o.id, Math.max(0, Number(e.target.value)))}
+                  className="field flex-1 !py-1 text-[11px] font-bold mono-tabular"
+                />
+                <span className="num w-10 text-right text-od-soft">{Math.round(share * 100)}%</span>
+              </div>
+              <div className="mt-1 ml-0 h-0.5 w-full bg-od-line">
+                <div
+                  className="h-full bg-od-ink transition-[width] duration-200"
+                  style={{ width: `${Math.min(100, share * 100)}%` }}
+                />
+              </div>
+            </label>
+          );
+        })}
         <button
           onClick={() => {
             const keys = Object.keys(value);
@@ -51,12 +63,27 @@ function DistEditor({
             const share = 1 / (k || 1);
             onChange(Object.fromEntries(options.map((o) => [o.id, share])));
           }}
-          className="text-[9px] uppercase tracking-[0.18em] text-secondary underline underline-offset-4 cursor-pointer hover:text-primary"
+          className="text-[9px] uppercase tracking-[0.18em] text-od-muted underline underline-offset-4 cursor-pointer transition-colors hover:text-od-ink"
         >
           Equalize
         </button>
       </div>
     </div>
+  );
+}
+
+function FieldRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="flex items-center gap-3 text-[10px] uppercase tracking-[0.12em] text-od-muted">
+      <span className="w-32 shrink-0">{label}</span>
+      {children}
+    </label>
   );
 }
 
@@ -70,9 +97,9 @@ function PhaseEditor({
   const set = (i: number, patch: Partial<EventPhaseModel>) =>
     onChange(phases.map((p, j) => (j === i ? { ...p, ...patch } : p)));
   return (
-    <div className="border border-outline-variant">
-      <div className="flex items-center justify-between px-md py-sm bg-surface-container-low grid-line-bottom">
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Event phases</span>
+    <div className="blk">
+      <div className="blk-hd">
+        <span className="sec-label">Event phases</span>
         {phases.length < 6 && (
           <button
             onClick={() =>
@@ -87,20 +114,20 @@ function PhaseEditor({
                 },
               ])
             }
-            className="btn-outline !py-xs"
+            className="btn btn-ghost !px-2 !py-1"
           >
-            <Plus className="w-3 h-3" /> Add phase
+            <Plus className="h-3 w-3" /> Add phase
           </button>
         )}
       </div>
-      <ul className="divide-y divide-outline-variant">
+      <ul className="divide-y divide-od-line">
         {phases.map((p, i) => (
-          <li key={i} className="px-md py-sm space-y-sm">
-            <div className="flex items-center gap-sm">
+          <li key={i} className="space-y-2.5 px-4 py-3">
+            <div className="flex items-center gap-2">
               <select
                 value={p.name}
                 onChange={(e) => set(i, { name: e.target.value as EventPhaseName })}
-                className="bg-background border border-primary px-sm py-xs text-[10px] font-bold uppercase tracking-widest cursor-pointer"
+                className="field !py-1 text-[10px] font-bold uppercase tracking-widest cursor-pointer"
               >
                 {PHASE_NAMES.map((n) => (
                   <option key={n} value={n}>
@@ -108,63 +135,61 @@ function PhaseEditor({
                   </option>
                 ))}
               </select>
-              <span className="text-[9px] uppercase tracking-[0.16em] text-secondary mono-tabular">
+              <span className="num text-[9px] uppercase tracking-[0.14em] text-od-muted">
                 {p.start_minute}–{p.end_minute} min
               </span>
               <button
                 onClick={() => onChange(phases.filter((_, j) => j !== i))}
                 aria-label={`Remove phase ${i + 1}`}
-                className="ml-auto p-xs text-error cursor-pointer hover:bg-error hover:text-background transition-none"
+                className="ml-auto btn btn-ghost !px-2 !py-1 text-od-danger hover:!text-od-danger"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="h-3.5 w-3.5" />
               </button>
             </div>
-            <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.14em] text-secondary">
-              Start minute
-              <input
-                type="number"
-                min={0}
-                value={p.start_minute}
-                onChange={(e) => set(i, { start_minute: Math.max(0, Number(e.target.value)) })}
-                className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
-              />
-            </label>
-            <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.14em] text-secondary">
-              End minute
-              <input
-                type="number"
-                min={0}
-                value={p.end_minute}
-                onChange={(e) => set(i, { end_minute: Math.max(1, Number(e.target.value)) })}
-                className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
-              />
-            </label>
-            <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.14em] text-secondary">
-              Arrival multiplier
-              <input
-                type="number"
-                min={0}
-                step={0.1}
-                value={p.arrival_rate_multiplier}
-                onChange={(e) => set(i, { arrival_rate_multiplier: Math.max(0, Number(e.target.value)) })}
-                className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
-              />
-            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <FieldRow label="Start">
+                <input
+                  type="number"
+                  min={0}
+                  value={p.start_minute}
+                  onChange={(e) => set(i, { start_minute: Math.max(0, Number(e.target.value)) })}
+                  className="field w-full !py-1 text-[11px] font-bold mono-tabular"
+                />
+              </FieldRow>
+              <FieldRow label="End">
+                <input
+                  type="number"
+                  min={0}
+                  value={p.end_minute}
+                  onChange={(e) => set(i, { end_minute: Math.max(1, Number(e.target.value)) })}
+                  className="field w-full !py-1 text-[11px] font-bold mono-tabular"
+                />
+              </FieldRow>
+              <FieldRow label="Arrival ×">
+                <input
+                  type="number"
+                  min={0}
+                  step={0.1}
+                  value={p.arrival_rate_multiplier}
+                  onChange={(e) => set(i, { arrival_rate_multiplier: Math.max(0, Number(e.target.value)) })}
+                  className="field w-full !py-1 text-[11px] font-bold mono-tabular"
+                />
+              </FieldRow>
+            </div>
             {p.name === 'EXIT_SURGE' && (
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.14em] text-secondary">
-                Spawn mode
+              <FieldRow label="Spawn mode">
                 <select
                   value={p.spawn ?? ''}
                   onChange={(e) =>
                     set(i, { spawn: e.target.value === '' ? null : e.target.value })
                   }
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[10px] font-bold uppercase tracking-widest cursor-pointer"
+                  className="field flex-1 !py-1 text-[10px] font-bold uppercase tracking-widest cursor-pointer"
                 >
                   <option value="">from arrivals</option>
                   <option value="EXIT_SURGE">seated crowd leaves</option>
                   <option value="EVACUATION">evacuation</option>
                 </select>
-              </label>
+              </FieldRow>
             )}
           </li>
         ))}
@@ -179,6 +204,7 @@ export default function ScenarioBuilderView() {
   const [source, setSource] = useState('');
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeTone, setNoticeTone] = useState<'ok' | 'err'>('ok');
 
   useEffect(() => {
     if (!draft && scenarios.length > 0) {
@@ -201,10 +227,12 @@ export default function ScenarioBuilderView() {
       const saved = existing ? await api.saveScenario(draft) : await api.createScenario(draft);
       setDraft(saved);
       setNotice(`Scenario '${saved.id}' saved.`);
+      setNoticeTone('ok');
       await refreshCatalog();
       await selectScenario(saved.id);
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Save failed');
+      setNoticeTone('err');
     } finally {
       setSaving(false);
     }
@@ -212,7 +240,7 @@ export default function ScenarioBuilderView() {
 
   if (!draft) {
     return (
-      <div className="border border-outline-variant px-md py-xl text-[11px] uppercase tracking-[0.16em] text-secondary">
+      <div className="blk px-4 py-10 text-center text-[11px] uppercase tracking-[0.16em] text-od-muted">
         No scenarios found in the catalogue.
       </div>
     );
@@ -230,10 +258,9 @@ export default function ScenarioBuilderView() {
   const runnable = Object.keys(draft.gate_distribution).length > 0;
 
   return (
-    <div className="space-y-lg">
-      <div className="flex flex-wrap items-center gap-md">
-        <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.2em] text-secondary">
-          Load scenario
+    <div className="mx-auto max-w-5xl space-y-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <FieldRow label="Load scenario">
           <select
             value={source}
             onChange={(e) => {
@@ -243,7 +270,7 @@ export default function ScenarioBuilderView() {
                 setSource(s.id);
               }
             }}
-            className="bg-background border border-primary px-md py-sm text-[11px] font-bold uppercase tracking-widest cursor-pointer"
+            className="field cursor-pointer"
           >
             {scenarios.map((s) => (
               <option key={s.id} value={s.id}>
@@ -251,9 +278,8 @@ export default function ScenarioBuilderView() {
               </option>
             ))}
           </select>
-        </label>
-        <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.2em] text-secondary">
-          Venue
+        </FieldRow>
+        <FieldRow label="Venue">
           <select
             value={draft.venue_id}
             onChange={(e) => {
@@ -277,7 +303,7 @@ export default function ScenarioBuilderView() {
               }
               setDraft(s);
             }}
-            className="bg-background border border-primary px-md py-sm text-[11px] font-bold uppercase tracking-widest cursor-pointer"
+            className="field cursor-pointer"
           >
             {venues.map((v) => (
               <option key={v.id} value={v.id}>
@@ -285,72 +311,71 @@ export default function ScenarioBuilderView() {
               </option>
             ))}
           </select>
-        </label>
-        <div className="ml-auto flex items-center gap-md">
-          {notice && <span className="text-[10px] uppercase tracking-[0.14em] font-bold text-error">{notice}</span>}
-          <button onClick={save} disabled={saving} className="btn-primary">
-            <Save className="w-3.5 h-3.5" /> {saving ? 'Saving…' : 'Save scenario'}
+        </FieldRow>
+        <div className="ml-auto flex items-center gap-3">
+          {notice && (
+            <span className={`text-[10px] uppercase tracking-[0.12em] font-bold ${noticeTone === 'ok' ? 'text-od-ok' : 'text-od-danger'}`}>
+              {notice}
+            </span>
+          )}
+          <button onClick={save} disabled={saving} className="btn btn-solid">
+            <Save className="h-3.5 w-3.5" /> {saving ? 'Saving…' : 'Save scenario'}
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg items-start">
-        <div className="space-y-lg">
-          <div className="border border-outline-variant">
-            <div className="px-md py-sm bg-surface-container-low grid-line-bottom text-[10px] font-bold uppercase tracking-[0.2em]">
-              Crowd & demand
+      <div className="grid grid-cols-1 gap-5 items-start lg:grid-cols-2">
+        <div className="space-y-5">
+          <div className="blk">
+            <div className="blk-hd">
+              <span className="sec-label">Crowd & demand</span>
             </div>
-            <div className="px-md py-md space-y-md">
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Name
+            <div className="space-y-2.5 px-4 py-4">
+              <FieldRow label="Name">
                 <input
                   value={draft.name}
                   onChange={(e) => set({ name: e.target.value })}
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold uppercase tracking-widest"
+                  className="field flex-1 text-[11px] font-bold uppercase tracking-widest"
                 />
-              </label>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Crowd size
+              </FieldRow>
+              <FieldRow label="Crowd size">
                 <input
                   type="number"
                   min={1}
                   step={100}
                   value={draft.crowd_size}
                   onChange={(e) => set({ crowd_size: Math.max(1, Number(e.target.value)) })}
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
+                  className="field flex-1 text-[11px] font-bold mono-tabular"
                 />
-              </label>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Arrival rate (p/min)
+              </FieldRow>
+              <FieldRow label="Arrival (p/min)">
                 <input
                   type="number"
                   min={1}
                   value={draft.arrival_rate_per_minute}
                   onChange={(e) => set({ arrival_rate_per_minute: Math.max(1, Number(e.target.value)) })}
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
+                  className="field flex-1 text-[11px] font-bold mono-tabular"
                 />
-              </label>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Exit-surge rate (p/min)
+              </FieldRow>
+              <FieldRow label="Exit surge (p/min)">
                 <input
                   type="number"
                   min={0}
                   value={draft.exit_rate_per_minute}
                   onChange={(e) => set({ exit_rate_per_minute: Math.max(0, Number(e.target.value)) })}
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
+                  className="field flex-1 text-[11px] font-bold mono-tabular"
                 />
-              </label>
-              <label className="flex items-center gap-sm text-[10px] uppercase tracking-[0.16em] text-secondary">
-                Departure spread (min)
+              </FieldRow>
+              <FieldRow label="Departure spread">
                 <input
                   type="number"
                   min={0.5}
                   step={0.5}
                   value={draft.surge_departure_spread_min}
                   onChange={(e) => set({ surge_departure_spread_min: Math.max(0.5, Number(e.target.value)) })}
-                  className="flex-1 bg-background border border-primary px-sm py-xs text-[11px] font-bold mono-tabular"
+                  className="field flex-1 text-[11px] font-bold mono-tabular"
                 />
-              </label>
+              </FieldRow>
             </div>
           </div>
 
@@ -362,7 +387,7 @@ export default function ScenarioBuilderView() {
           />
         </div>
 
-        <div className="space-y-lg">
+        <div className="space-y-5">
           <DistEditor
             title="Destination distribution"
             value={draft.destination_distribution}
@@ -378,20 +403,20 @@ export default function ScenarioBuilderView() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-lg items-start">
+      <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
         <PhaseEditor phases={draft.event_phases} onChange={(p) => set({ event_phases: p })} />
-        <div className="flex flex-col justify-between gap-lg">
-          <div className="border border-outline-variant px-md py-md text-[10px] uppercase tracking-[0.16em] leading-relaxed text-secondary">
-            iOS-style defaults per cue: doors open → ENTRY ramp; kick-off → PEAK; half-time →
-            INTERVAL; full-time → EXIT_SURGE where seated crowds depart in waves. Distributions must
-            each sum to 1.0 or the backend rejects the save.
+        <div className="flex flex-col justify-between gap-5">
+          <div className="blk border-l-2 border-l-od-warn px-4 py-3 text-[10px] uppercase tracking-[0.14em] leading-relaxed text-od-muted">
+            Doors open → ENTRY ramp · kick-off → PEAK · half-time → INTERVAL · full-time → EXIT_SURGE
+            where seated crowds depart in waves. Distributions must each sum to 1.0 or the backend
+            rejects the save.
           </div>
           <button
             onClick={runSimulation}
             disabled={busy || !runnable}
-            className="btn-primary w-full"
+            className="btn btn-solid w-full !py-2.5"
           >
-            <Play className="w-3.5 h-3.5" /> {busy ? 'Starting…' : 'Run this scenario'}
+            <Play className="h-3.5 w-3.5" /> {busy ? 'Starting…' : 'Run this scenario'}
           </button>
         </div>
       </div>
