@@ -1,0 +1,487 @@
+@import "tailwindcss";
+
+@config "../tailwind.config.js";
+
+/* ------------------------------------------------------------------ */
+/*  Operational palette (toggle with .dark on <html>)                 */
+/* ------------------------------------------------------------------ */
+:root {
+  --od-bg: #f4f1ec;
+  --od-surface: #faf8f4;
+  --od-surface-dim: #ece7de;
+  --od-canvas: #ece8df;
+  --od-panel: #faf8f4;
+  --od-line: #d6cfc3;
+  --od-line-strong: #b5aca0;
+  --od-ink: #1d1a15;
+  --od-soft: #5d574e;
+  --od-muted: #8c857a;
+
+  --od-ok: #1c7a3d;
+  --od-ok-soft: #d8ead9;
+  --od-warn: #b45e09;
+  --od-warn-soft: #f3e3c8;
+  --od-danger: #b3261e;
+  --od-danger-soft: #f5d9d5;
+  --od-focus: #1d1a15;
+  --od-emergency: var(--od-danger);
+
+  /* 2.5D isometric slab */
+  --od-slab-top: #f6f3ec;
+  --od-slab-front: #dfd8ca;
+  --od-slab-side: #c9c0b1;
+}
+
+html.dark {
+  --od-bg: #14120f;
+  --od-surface: #1b1814;
+  --od-surface-dim: #221f1a;
+  --od-canvas: #0e0c0a;
+  --od-panel: #1b1814;
+  --od-line: #38332b;
+  --od-line-strong: #514a3f;
+  --od-ink: #ece7de;
+  --od-soft: #a69e92;
+  --od-muted: #6f685e;
+
+  --od-ok: #57c069;
+  --od-ok-soft: #1d3a22;
+  --od-warn: #e0a24e;
+  --od-warn-soft: #3b2e19;
+  --od-danger: #ef5c52;
+  --od-danger-soft: #42211e;
+  --od-focus: #ece7de;
+
+  /* 2.5D isometric slab */
+  --od-slab-top: #1b1814;
+  --od-slab-front: #2a2620;
+  --od-slab-side: #37322a;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background: var(--od-bg);
+    color: var(--od-ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    transition: background-color 160ms linear, color 160ms linear;
+  }
+
+  ::selection {
+    background: var(--od-ink);
+    color: var(--od-bg);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Operational component system                                       */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .panel {
+    background: var(--od-surface);
+    border: 1px solid var(--od-line);
+  }
+
+  .panel-head {
+    background: var(--od-surface-dim);
+    border-bottom: 1px solid var(--od-line);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--od-line-strong);
+    background: var(--od-surface);
+    color: var(--od-ink);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background-color 80ms linear, color 80ms linear, border-color 80ms linear,
+      opacity 80ms linear;
+    user-select: none;
+  }
+  .btn:hover:not(:disabled) {
+    border-color: var(--od-ink);
+  }
+  .btn:active:not(:disabled) {
+    opacity: 0.75;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .btn-solid {
+    background: var(--od-ink);
+    border-color: var(--od-ink);
+    color: var(--od-bg);
+  }
+  .btn-solid:hover:not(:disabled) {
+    opacity: 0.88;
+    border-color: var(--od-ink);
+  }
+
+  .btn-ok {
+    background: var(--od-ok);
+    border-color: var(--od-ok);
+    color: #ffffff;
+  }
+  .btn-ok:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+
+  .btn-danger {
+    background: var(--od-danger);
+    border-color: var(--od-danger);
+    color: #ffffff;
+  }
+  .btn-danger:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    border-color: transparent;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--od-surface-dim);
+    border-color: transparent;
+  }
+
+  .field {
+    background: var(--od-surface);
+    border: 1px solid var(--od-line-strong);
+    color: var(--od-ink);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    padding: 5px 8px;
+    outline: none;
+  }
+  .field:focus {
+    border-color: var(--od-focus);
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid var(--od-line);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    background: var(--od-surface);
+    color: var(--od-ink);
+    transition: border-color 80ms linear, background-color 80ms linear;
+  }
+  .chip:hover {
+    border-color: var(--od-ink);
+  }
+  .chip[data-active="true"] {
+    background: var(--od-ink);
+    border-color: var(--od-ink);
+    color: var(--od-bg);
+  }
+
+  .rail-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 14px;
+    font-family: "IBM Plex Sans", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--od-soft);
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: color 80ms linear, background-color 80ms linear, border-color 80ms linear;
+  }
+  .rail-btn:hover {
+    color: var(--od-ink);
+    background: var(--od-surface-dim);
+  }
+  .rail-btn[data-active="true"] {
+    color: var(--od-ink);
+    background: var(--od-surface-dim);
+    border-left-color: var(--od-ink);
+  }
+  .rail-btn.is-active {
+    color: var(--od-ink);
+    background: var(--od-surface-dim);
+    border-left-color: var(--od-ink);
+  }
+
+  .chip[data-active="true"] {
+    background: var(--od-ink);
+    border-color: var(--od-ink);
+    color: var(--od-bg);
+  }
+  .chip.is-active {
+    background: var(--od-ink);
+    border-color: var(--od-ink);
+    color: var(--od-bg);
+  }
+  .chip.is-warn {
+    border-color: var(--od-warn);
+    color: var(--od-warn);
+    background: var(--od-warn-soft);
+  }
+  .chip.is-danger {
+    border-color: var(--od-danger);
+    color: var(--od-danger);
+    background: var(--od-danger-soft);
+  }
+
+  .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--od-muted);
+  }
+
+  .num {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .status-dot[data-state="ok"] {
+    background: var(--od-ok);
+  }
+  .status-dot[data-state="warn"] {
+    background: var(--od-warn);
+  }
+  .status-dot[data-state="danger"] {
+    background: var(--od-danger);
+  }
+  .status-dot[data-state="idle"] {
+    background: var(--od-muted);
+  }
+  .status-dot.is-ok {
+    background: var(--od-ok);
+  }
+  .status-dot.is-warn {
+    background: var(--od-warn);
+  }
+  .status-dot.is-danger {
+    background: var(--od-danger);
+  }
+  .status-dot.is-scan {
+    background: var(--od-muted);
+    animation: od-blink 1.2s steps(2, start) infinite;
+  }
+
+  .ctx-panel {
+    background: var(--od-surface);
+    border: 1px solid var(--od-line-strong);
+    box-shadow: 4px 4px 0 0 rgba(0, 0, 0, 0.06);
+  }
+
+  .slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--od-line);
+    border-radius: 2px;
+    outline: none;
+  }
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--od-ink);
+    border: 3px solid var(--od-surface);
+    box-shadow: 0 0 0 1px var(--od-ink);
+    cursor: grab;
+  }
+  .slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--od-ink);
+    border: 3px solid var(--od-surface);
+    box-shadow: 0 0 0 1px var(--od-ink);
+    cursor: grab;
+  }
+}
+
+@layer utilities {
+  .hairline-t {
+    border-top: 1px solid var(--od-line);
+  }
+  .hairline-b {
+    border-bottom: 1px solid var(--od-line);
+  }
+  .hairline-l {
+    border-left: 1px solid var(--od-line);
+  }
+  .hairline-r {
+    border-right: 1px solid var(--od-line);
+  }
+
+  .agent-dot {
+    transition: transform 90ms linear;
+    will-change: transform;
+  }
+
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--od-line-strong) transparent;
+  }
+
+  .font-display {
+    font-family: "IBM Plex Sans", sans-serif;
+  }
+
+  .mono-tabular {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .grid-line-right {
+    border-right: 1px solid var(--od-line);
+  }
+
+  .bg-od-canvas {
+    background: var(--od-canvas);
+  }
+  .bg-od-panel {
+    background: var(--od-panel);
+  }
+  .bg-od-surface {
+    background: var(--od-surface);
+  }
+  .bg-od-surface-dim {
+    background: var(--od-surface-dim);
+  }
+  .bg-od-ink {
+    background: var(--od-ink);
+  }
+  .bg-od-warn {
+    background: var(--od-warn);
+  }
+  .bg-od-danger {
+    background: var(--od-danger);
+  }
+  .bg-od-ok {
+    background: var(--od-ok);
+  }
+  .bg-od-warn-soft {
+    background: var(--od-warn-soft);
+  }
+  .bg-od-danger-soft {
+    background: var(--od-danger-soft);
+  }
+
+  .text-od-ink {
+    color: var(--od-ink);
+  }
+  .text-od-soft {
+    color: var(--od-soft);
+  }
+  .text-od-muted {
+    color: var(--od-muted);
+  }
+  .text-od-warn {
+    color: var(--od-warn);
+  }
+  .text-od-danger {
+    color: var(--od-danger);
+  }
+  .text-od-ok {
+    color: var(--od-ok);
+  }
+
+  .border-od-line {
+    border-color: var(--od-line);
+  }
+  .border-od-ink {
+    border-color: var(--od-ink);
+  }
+  .border-od-warn {
+    border-color: var(--od-warn);
+  }
+  .border-od-danger {
+    border-color: var(--od-danger);
+  }
+  .border-od-ok {
+    border-color: var(--od-ok);
+  }
+
+  .hover\:bg-od-warn:hover {
+    background: var(--od-warn);
+  }
+  .hover\:bg-od-warn-soft:hover {
+    background: var(--od-warn-soft);
+  }
+
+  .risk-normal {
+    color: var(--od-soft);
+  }
+  .risk-elevated {
+    color: var(--od-warn);
+  }
+  .risk-high,
+  .risk-critical {
+    color: var(--od-danger);
+  }
+
+  .odo-pulse,
+  .od-pulse {
+    animation: od-pulse 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes od-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@keyframes od-pulse {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

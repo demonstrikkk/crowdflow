@@ -1,0 +1,66 @@
+{
+  "id": "heavy_rain",
+  "name": "Heavy Rain During Egress",
+  "venue_id": "unity_arena",
+  "crowd_size": 8000,
+  "arrival_rate_per_minute": 200,
+  "exit_rate_per_minute": 260,
+  "gate_distribution": {
+    "GATE_A": 0.16,
+    "GATE_B": 0.16,
+    "GATE_C": 0.17,
+    "GATE_D": 0.17,
+    "GATE_E": 0.17,
+    "GATE_F": 0.17
+  },
+  "destination_distribution": {
+    "SEAT_N": 0.3,
+    "SEAT_S": 0.3,
+    "SEAT_E": 0.17,
+    "SEAT_W": 0.17,
+    "CONCESSION_N": 0.03,
+    "CONCESSION_S": 0.03
+  },
+  "exit_distribution": {
+    "EXIT_N": 0.25,
+    "EXIT_S": 0.25,
+    "EXIT_E": 0.25,
+    "EXIT_W": 0.25
+  },
+  "event_phases": [
+    {
+      "name": "ENTRY",
+      "start_minute": 0,
+      "end_minute": 35,
+      "arrival_rate_multiplier": 1.0
+    },
+    {
+      "name": "PEAK",
+      "start_minute": 35,
+      "end_minute": 95,
+      "arrival_rate_multiplier": 0.1
+    },
+    {
+      "name": "INTERVAL",
+      "start_minute": 95,
+      "end_minute": 110,
+      "arrival_rate_multiplier": 0.05
+    },
+    {
+      "name": "EXIT_SURGE",
+      "start_minute": 110,
+      "end_minute": 145,
+      "arrival_rate_multiplier": 1.2
+    }
+  ],
+  "surge_departure_spread_min": 3.0,
+  "special": {
+    "weather": {
+      "condition": "HEAVY_RAIN",
+      "capacity_multiplier": 0.55,
+      "speed_multiplier": 0.7,
+      "unsafe_outdoor": false,
+      "applies_outdoor_only": true
+    }
+  }
+}

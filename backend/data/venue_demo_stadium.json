@@ -1,0 +1,560 @@
+{
+  "id": "unity_arena",
+  "name": "Unity Arena — Grand Prix Stadium",
+  "width": 1000,
+  "height": 620,
+  "metadata": {
+    "location": {
+      "lat": 41.5698,
+      "lon": 2.2586
+    }
+  },
+  "nodes": [
+    {
+      "id": "GATE_A",
+      "position": {
+        "x": 250,
+        "y": 30
+      },
+      "type": "ENTRY",
+      "capacity": 100,
+      "area_m2": 60
+    },
+    {
+      "id": "GATE_B",
+      "position": {
+        "x": 750,
+        "y": 30
+      },
+      "type": "ENTRY",
+      "capacity": 100,
+      "area_m2": 60
+    },
+    {
+      "id": "GATE_C",
+      "position": {
+        "x": 970,
+        "y": 150
+      },
+      "type": "ENTRY",
+      "capacity": 100,
+      "area_m2": 60
+    },
+    {
+      "id": "GATE_D",
+      "position": {
+        "x": 970,
+        "y": 450
+      },
+      "type": "ENTRY",
+      "capacity": 100,
+      "area_m2": 60
+    },
+    {
+      "id": "GATE_E",
+      "position": {
+        "x": 750,
+        "y": 590
+      },
+      "type": "ENTRY",
+      "capacity": 100,
+      "area_m2": 60
+    },
+    {
+      "id": "GATE_F",
+      "position": {
+        "x": 250,
+        "y": 590
+      },
+      "type": "ENTRY",
+      "capacity": 100,
+      "area_m2": 60
+    },
+    {
+      "id": "EXIT_N",
+      "position": {
+        "x": 500,
+        "y": 30
+      },
+      "type": "EXIT",
+      "capacity": 120,
+      "area_m2": 60
+    },
+    {
+      "id": "EXIT_E",
+      "position": {
+        "x": 970,
+        "y": 300
+      },
+      "type": "EXIT",
+      "capacity": 120,
+      "area_m2": 60
+    },
+    {
+      "id": "EXIT_S",
+      "position": {
+        "x": 500,
+        "y": 590
+      },
+      "type": "EXIT",
+      "capacity": 120,
+      "area_m2": 60
+    },
+    {
+      "id": "EXIT_W",
+      "position": {
+        "x": 30,
+        "y": 300
+      },
+      "type": "EXIT",
+      "capacity": 120,
+      "area_m2": 60
+    },
+    {
+      "id": "EMERGENCY_1",
+      "position": {
+        "x": 30,
+        "y": 160
+      },
+      "type": "EMERGENCY_EXIT",
+      "capacity": 250,
+      "area_m2": 80
+    },
+    {
+      "id": "EMERGENCY_2",
+      "position": {
+        "x": 150,
+        "y": 590
+      },
+      "type": "EMERGENCY_EXIT",
+      "capacity": 250,
+      "area_m2": 80
+    },
+    {
+      "id": "CONCOURSE_N",
+      "position": {
+        "x": 500,
+        "y": 140
+      },
+      "type": "INTERSECTION",
+      "capacity": 150,
+      "area_m2": 60
+    },
+    {
+      "id": "CONCOURSE_E",
+      "position": {
+        "x": 830,
+        "y": 300
+      },
+      "type": "INTERSECTION",
+      "capacity": 150,
+      "area_m2": 60
+    },
+    {
+      "id": "CONCOURSE_S",
+      "position": {
+        "x": 500,
+        "y": 480
+      },
+      "type": "INTERSECTION",
+      "capacity": 150,
+      "area_m2": 60
+    },
+    {
+      "id": "CONCOURSE_W",
+      "position": {
+        "x": 170,
+        "y": 300
+      },
+      "type": "INTERSECTION",
+      "capacity": 150,
+      "area_m2": 60
+    },
+    {
+      "id": "CONCESSION_N",
+      "position": {
+        "x": 500,
+        "y": 185
+      },
+      "type": "CONCESSION",
+      "capacity": 80,
+      "area_m2": 100
+    },
+    {
+      "id": "CONCESSION_S",
+      "position": {
+        "x": 500,
+        "y": 435
+      },
+      "type": "CONCESSION",
+      "capacity": 80,
+      "area_m2": 100
+    },
+    {
+      "id": "CHECKPOINT_N",
+      "position": {
+        "x": 500,
+        "y": 240
+      },
+      "type": "CHECKPOINT",
+      "capacity": 90,
+      "area_m2": 30
+    },
+    {
+      "id": "CHECKPOINT_E",
+      "position": {
+        "x": 770,
+        "y": 300
+      },
+      "type": "CHECKPOINT",
+      "capacity": 90,
+      "area_m2": 30
+    },
+    {
+      "id": "CHECKPOINT_S",
+      "position": {
+        "x": 500,
+        "y": 380
+      },
+      "type": "CHECKPOINT",
+      "capacity": 90,
+      "area_m2": 30
+    },
+    {
+      "id": "CHECKPOINT_W",
+      "position": {
+        "x": 230,
+        "y": 300
+      },
+      "type": "CHECKPOINT",
+      "capacity": 90,
+      "area_m2": 30
+    },
+    {
+      "id": "SEAT_N",
+      "position": {
+        "x": 500,
+        "y": 280
+      },
+      "type": "ZONE",
+      "capacity": 5000,
+      "area_m2": 2500
+    },
+    {
+      "id": "SEAT_E",
+      "position": {
+        "x": 710,
+        "y": 300
+      },
+      "type": "ZONE",
+      "capacity": 5000,
+      "area_m2": 2500
+    },
+    {
+      "id": "SEAT_S",
+      "position": {
+        "x": 500,
+        "y": 340
+      },
+      "type": "ZONE",
+      "capacity": 5000,
+      "area_m2": 2500
+    },
+    {
+      "id": "SEAT_W",
+      "position": {
+        "x": 290,
+        "y": 300
+      },
+      "type": "ZONE",
+      "capacity": 5000,
+      "area_m2": 2500
+    },
+    {
+      "id": "PITCH",
+      "position": {
+        "x": 500,
+        "y": 310
+      },
+      "type": "ZONE",
+      "capacity": 8000,
+      "area_m2": 4000
+    }
+  ],
+  "edges": [
+    {
+      "id": "e_ga_cn",
+      "source": "GATE_A",
+      "destination": "CONCOURSE_N",
+      "length_m": 30,
+      "width_m": 7,
+      "capacity": 45,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_gb_cn",
+      "source": "GATE_B",
+      "destination": "CONCOURSE_N",
+      "length_m": 30,
+      "width_m": 7,
+      "capacity": 45,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_gc_ce",
+      "source": "GATE_C",
+      "destination": "CONCOURSE_E",
+      "length_m": 30,
+      "width_m": 7,
+      "capacity": 45,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_gd_ce",
+      "source": "GATE_D",
+      "destination": "CONCOURSE_E",
+      "length_m": 30,
+      "width_m": 7,
+      "capacity": 45,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_ge_cs",
+      "source": "GATE_E",
+      "destination": "CONCOURSE_S",
+      "length_m": 30,
+      "width_m": 7,
+      "capacity": 45,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_gf_cs",
+      "source": "GATE_F",
+      "destination": "CONCOURSE_S",
+      "length_m": 30,
+      "width_m": 7,
+      "capacity": 45,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_cn_ce",
+      "source": "CONCOURSE_N",
+      "destination": "CONCOURSE_E",
+      "length_m": 37,
+      "width_m": 8,
+      "capacity": 55
+    },
+    {
+      "id": "e_ce_cs",
+      "source": "CONCOURSE_E",
+      "destination": "CONCOURSE_S",
+      "length_m": 38,
+      "width_m": 8,
+      "capacity": 55
+    },
+    {
+      "id": "e_cs_cw",
+      "source": "CONCOURSE_S",
+      "destination": "CONCOURSE_W",
+      "length_m": 38,
+      "width_m": 8,
+      "capacity": 55
+    },
+    {
+      "id": "e_cw_cn",
+      "source": "CONCOURSE_W",
+      "destination": "CONCOURSE_N",
+      "length_m": 37,
+      "width_m": 8,
+      "capacity": 55
+    },
+    {
+      "id": "e_cn_xn",
+      "source": "CONCOURSE_N",
+      "destination": "EXIT_N",
+      "length_m": 20,
+      "width_m": 8,
+      "capacity": 50,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_ce_xe",
+      "source": "CONCOURSE_E",
+      "destination": "EXIT_E",
+      "length_m": 20,
+      "width_m": 8,
+      "capacity": 50,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_cs_xs",
+      "source": "CONCOURSE_S",
+      "destination": "EXIT_S",
+      "length_m": 20,
+      "width_m": 8,
+      "capacity": 50,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_cw_xw",
+      "source": "CONCOURSE_W",
+      "destination": "EXIT_W",
+      "length_m": 20,
+      "width_m": 8,
+      "capacity": 50,
+      "exposure": "OUTDOOR"
+    },
+    {
+      "id": "e_cw_e1",
+      "source": "CONCOURSE_W",
+      "destination": "EMERGENCY_1",
+      "length_m": 20,
+      "width_m": 14,
+      "capacity": 160,
+      "is_emergency": true
+    },
+    {
+      "id": "e_cs_e2",
+      "source": "CONCOURSE_S",
+      "destination": "EMERGENCY_2",
+      "length_m": 20,
+      "width_m": 14,
+      "capacity": 160,
+      "is_emergency": true
+    },
+    {
+      "id": "e_cn_kn",
+      "source": "CONCOURSE_N",
+      "destination": "CONCESSION_N",
+      "length_m": 30,
+      "width_m": 4.0,
+      "capacity": 40
+    },
+    {
+      "id": "e_kn_ckn",
+      "source": "CONCESSION_N",
+      "destination": "CHECKPOINT_N",
+      "length_m": 30,
+      "width_m": 4.5,
+      "capacity": 45
+    },
+    {
+      "id": "e_cs_ks",
+      "source": "CONCOURSE_S",
+      "destination": "CONCESSION_S",
+      "length_m": 30,
+      "width_m": 4.0,
+      "capacity": 40
+    },
+    {
+      "id": "e_ks_cks",
+      "source": "CONCESSION_S",
+      "destination": "CHECKPOINT_S",
+      "length_m": 30,
+      "width_m": 4.5,
+      "capacity": 45
+    },
+    {
+      "id": "e_ce_cke",
+      "source": "CONCOURSE_E",
+      "destination": "CHECKPOINT_E",
+      "length_m": 20,
+      "width_m": 9,
+      "capacity": 70
+    },
+    {
+      "id": "e_cw_ckw",
+      "source": "CONCOURSE_W",
+      "destination": "CHECKPOINT_W",
+      "length_m": 20,
+      "width_m": 9,
+      "capacity": 70
+    },
+    {
+      "id": "e_ckn_sn",
+      "source": "CHECKPOINT_N",
+      "destination": "SEAT_N",
+      "length_m": 25,
+      "width_m": 9,
+      "capacity": 70
+    },
+    {
+      "id": "e_cke_se",
+      "source": "CHECKPOINT_E",
+      "destination": "SEAT_E",
+      "length_m": 25,
+      "width_m": 9,
+      "capacity": 70
+    },
+    {
+      "id": "e_cks_ss",
+      "source": "CHECKPOINT_S",
+      "destination": "SEAT_S",
+      "length_m": 25,
+      "width_m": 9,
+      "capacity": 70
+    },
+    {
+      "id": "e_ckw_sw",
+      "source": "CHECKPOINT_W",
+      "destination": "SEAT_W",
+      "length_m": 25,
+      "width_m": 9,
+      "capacity": 70
+    },
+    {
+      "id": "e_sn_p",
+      "source": "SEAT_N",
+      "destination": "PITCH",
+      "length_m": 10,
+      "width_m": 12,
+      "capacity": 140,
+      "is_emergency": true
+    },
+    {
+      "id": "e_se_p",
+      "source": "SEAT_E",
+      "destination": "PITCH",
+      "length_m": 21,
+      "width_m": 12,
+      "capacity": 140,
+      "is_emergency": true
+    },
+    {
+      "id": "e_ss_p",
+      "source": "SEAT_S",
+      "destination": "PITCH",
+      "length_m": 10,
+      "width_m": 12,
+      "capacity": 140,
+      "is_emergency": true
+    },
+    {
+      "id": "e_sw_p",
+      "source": "SEAT_W",
+      "destination": "PITCH",
+      "length_m": 21,
+      "width_m": 12,
+      "capacity": 140,
+      "is_emergency": true
+    },
+    {
+      "id": "e_ckw_e1",
+      "source": "CHECKPOINT_W",
+      "destination": "EMERGENCY_1",
+      "capacity": 160,
+      "length_m": 20,
+      "width_m": 6.0,
+      "is_emergency": true
+    },
+    {
+      "id": "e_cks_e2",
+      "source": "CHECKPOINT_S",
+      "destination": "EMERGENCY_2",
+      "capacity": 160,
+      "length_m": 20,
+      "width_m": 6.0,
+      "is_emergency": true
+    }
+  ]
+}

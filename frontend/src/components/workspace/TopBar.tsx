@@ -1,0 +1,109 @@
+import type { ScenarioModel, SimulationState, VenueModel } from '../../lib/types';
+import type { Mode } from '../../lib/selection';
+import CommandBar from './CommandBar';
+
+const MODE_TITLE: Record<Mode, string> = {
+  simulate: 'SIMULATE',
+  investigate: 'INVESTIGATE',
+  intervene: 'INTERVENE',
+  compare: 'COMPARE',
+};
+
+function WeatherChip({ sim }: { sim: SimulationState }) {
+  if (!sim.weather) return null;
+  const w = sim.weather;
+  return (
+    <span
+      className={`chip ${w.unsafe_outdoor ? 'is-danger' : w.condition !== 'CLEAR' ? 'is-warn' : ''}`}
+      title={`Weather: ${w.condition} · capacity ${Math.round(w.capacity_multiplier * 100)}% · speed ${Math.round(w.speed_multiplier * 100)}%`}
+    >
+      {w.condition.replace(/_/g, ' ')}
+      {w.unsafe_outdoor ? ' ⚠' : ''}
+    </span>
+  );
+}
+
+function IncidentChip({ sim }: { sim: SimulationState }) {
+  if (!sim.incident) return null;
+  const i = sim.incident;
+  const zone = sim.hazard_zones?.[0];
+  return (
+    <span
+      className="chip is-danger"
+      title={`${i.type} at ${i.location} · radius ${Math.round(i.radius_m)}m${i.spread_rate_m_min ? ` · spreading ${i.spread_rate_m_min}m/min` : ''}`}
+    >
+      {i.type} {zone ? `${Math.round(zone.radius_m)}m` : ''}
+    </span>
+  );
+}
+
+export default function TopBar({
+  mode,
+  venue,
+  scenario,
+  scenarios,
+  onScenario,
+  sim,
+  wsConnected,
+  onPlay,
+  onPause,
+}: {
+  mode: Mode;
+  venue: VenueModel | null;
+  scenario: ScenarioModel | null;
+  scenarios: ScenarioModel[];
+  onScenario: (id: string) => void;
+  sim: SimulationState | null;
+  wsConnected: boolean;
+  onPlay: () => void;
+  onPause: () => void;
+}) {
+  const playing = sim?.status === 'RUNNING';
+  return (
+    <header className="flex items-center gap-3 border-b border-od-line bg-od-panel px-3 h-12 shrink-0">
+      <h2 className="font-display text-[13px] font-bold uppercase tracking-[0.24em] text-od-ink">
+        {MODE_TITLE[mode]}
+      </h2>
+      <span className="w-px h-4 bg-od-line" />
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className="text-[10px] uppercase tracking-[0.16em] text-od-muted">Venue</span>
+        <span className="num truncate max-w-[140px]">{venue?.name ?? '—'}</span>
+      </div>
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className="text-[10px] uppercase tracking-[0.16em] text-od-muted">Event</span>
+        <select
+          className="field !w-auto max-w-[180px]"
+          value={scenario?.id ?? ''}
+          onChange={(e) => onScenario(e.target.value)}
+          disabled={scenarios.length === 0}
+          aria-label="Event scenario"
+        >
+          {scenarios.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <span className="flex-1" />
+      {sim && <WeatherChip sim={sim} />}
+      {sim && <IncidentChip sim={sim} />}
+      <CommandBar />
+      {sim && (
+        <span className="text-[10px] uppercase tracking-[0.16em] text-od-muted mono-tabular">
+          t=<span className="text-od-ink">{sim.t_min.toFixed(1)}</span>m
+        </span>
+      )}
+      <span className={`status-dot ${wsConnected ? 'is-ok' : 'is-scan'}`} title={wsConnected ? 'Live feed' : 'No live feed'} />
+      {sim && (
+        <button
+          className="btn btn-solid"
+          onClick={playing ? onPause : onPlay}
+          aria-label={playing ? 'Pause' : 'Play'}
+        >
+          {playing ? '❚❚' : '►'}
+        </button>
+      )}
+    </header>
+  );
+}
