@@ -1,0 +1,168 @@
+{
+  "rows": [
+    {
+      "sheet": "arena-4gates",
+      "ocr": "florence",
+      "gt_gates": [
+        "GATE A",
+        "GATE B",
+        "GATE C",
+        "GATE D"
+      ],
+      "n_gt": 4,
+      "recall_exact": 0.75,
+      "read_texts": [
+        "GATE A",
+        "GATE B",
+        "SEATING BLOCK 14",
+        "CONCOURSE",
+        "STAIRS",
+        "GATE C SCALE 1:500",
+        "GATE D"
+      ],
+      "n_gate_dets": 15,
+      "n_gates_sem": 15,
+      "n_bound": 3,
+      "bound_labels": [
+        "STAIRS",
+        "GATE A",
+        "GATE B"
+      ],
+      "bound_ok": 2,
+      "unresolved": [
+        "GATE C SCALE 1:500",
+        "GATE D"
+      ],
+      "degraded": false,
+      "notes": [
+        "scale: scale text 'GATE C SCALE 1:500' (1:500) under A0 paper assumption (low)"
+      ]
+    },
+    {
+      "sheet": "arena-4gates",
+      "ocr": "tesseract",
+      "gt_gates": [
+        "GATE A",
+        "GATE B",
+        "GATE C",
+        "GATE D"
+      ],
+      "n_gt": 4,
+      "recall_exact": 0.0,
+      "read_texts": [
+        "SEATING",
+        "BLOCK",
+        "14",
+        "CONCOURSE",
+        "=",
+        "STAIRS",
+        "CATE",
+        "1:500",
+        "CATE",
+        "D"
+      ],
+      "n_gate_dets": 15,
+      "n_gates_sem": 15,
+      "n_bound": 1,
+      "bound_labels": [
+        "STAIRS"
+      ],
+      "bound_ok": 0,
+      "unresolved": [],
+      "degraded": false,
+      "notes": []
+    },
+    {
+      "sheet": "stadium-stand-hatch",
+      "ocr": "florence",
+      "gt_gates": [
+        "GATE A",
+        "GATE B"
+      ],
+      "n_gt": 2,
+      "recall_exact": 1.0,
+      "read_texts": [
+        "GATE A",
+        "GATE B",
+        "SEATING BLOCK 14",
+        "CONCOURSE"
+      ],
+      "n_gate_dets": 13,
+      "n_gates_sem": 13,
+      "n_bound": 2,
+      "bound_labels": [
+        "GATE A",
+        "GATE B"
+      ],
+      "bound_ok": 2,
+      "unresolved": [],
+      "degraded": false,
+      "notes": []
+    },
+    {
+      "sheet": "stadium-stand-hatch",
+      "ocr": "tesseract",
+      "gt_gates": [
+        "GATE A",
+        "GATE B"
+      ],
+      "n_gt": 2,
+      "recall_exact": 0.0,
+      "read_texts": [
+        "SEATING",
+        "CONCOURSE"
+      ],
+      "n_gate_dets": 13,
+      "n_gates_sem": 13,
+      "n_bound": 0,
+      "bound_labels": [],
+      "bound_ok": 0,
+      "unresolved": [],
+      "degraded": false,
+      "notes": []
+    },
+    {
+      "sheet": "low-contrast-text",
+      "ocr": "florence",
+      "gt_gates": [
+        "GATE A"
+      ],
+      "n_gt": 1,
+      "recall_exact": 1.0,
+      "read_texts": [
+        "GATE A",
+        "CONCOURSE"
+      ],
+      "n_gate_dets": 2,
+      "n_gates_sem": 2,
+      "n_bound": 0,
+      "bound_labels": [],
+      "bound_ok": 0,
+      "unresolved": [
+        "GATE A"
+      ],
+      "degraded": false,
+      "notes": []
+    },
+    {
+      "sheet": "low-contrast-text",
+      "ocr": "tesseract",
+      "gt_gates": [
+        "GATE A"
+      ],
+      "n_gt": 1,
+      "recall_exact": 0.0,
+      "read_texts": [
+        "CONCOURSE"
+      ],
+      "n_gate_dets": 2,
+      "n_gates_sem": 2,
+      "n_bound": 0,
+      "bound_labels": [],
+      "bound_ok": 0,
+      "unresolved": [],
+      "degraded": false,
+      "notes": []
+    }
+  ]
+}

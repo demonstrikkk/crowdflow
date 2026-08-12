@@ -1,560 +1,2201 @@
 {
-  "id": "unity_arena",
-  "name": "Unity Arena — Grand Prix Stadium",
-  "width": 1000,
-  "height": 620,
-  "metadata": {
-    "location": {
-      "lat": 41.5698,
-      "lon": 2.2586
+  "schema_version": 2,
+  "venue": {
+    "id": "unity_arena",
+    "name": "Unity Arena \u2014 Grand Prix Stadium",
+    "width": 1000.0,
+    "height": 620.0,
+    "nodes": [
+      {
+        "id": "GATE_A",
+        "position": {
+          "x": 250.0,
+          "y": 30.0
+        },
+        "type": "ENTRY",
+        "capacity": 100.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:GATE_A",
+        "metadata": {}
+      },
+      {
+        "id": "GATE_B",
+        "position": {
+          "x": 750.0,
+          "y": 30.0
+        },
+        "type": "ENTRY",
+        "capacity": 100.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:GATE_B",
+        "metadata": {}
+      },
+      {
+        "id": "GATE_C",
+        "position": {
+          "x": 970.0,
+          "y": 150.0
+        },
+        "type": "ENTRY",
+        "capacity": 100.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:GATE_C",
+        "metadata": {}
+      },
+      {
+        "id": "GATE_D",
+        "position": {
+          "x": 970.0,
+          "y": 450.0
+        },
+        "type": "ENTRY",
+        "capacity": 100.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:GATE_D",
+        "metadata": {}
+      },
+      {
+        "id": "GATE_E",
+        "position": {
+          "x": 750.0,
+          "y": 590.0
+        },
+        "type": "ENTRY",
+        "capacity": 100.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:GATE_E",
+        "metadata": {}
+      },
+      {
+        "id": "GATE_F",
+        "position": {
+          "x": 250.0,
+          "y": 590.0
+        },
+        "type": "ENTRY",
+        "capacity": 100.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:GATE_F",
+        "metadata": {}
+      },
+      {
+        "id": "EXIT_N",
+        "position": {
+          "x": 500.0,
+          "y": 30.0
+        },
+        "type": "EXIT",
+        "capacity": 120.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:EXIT_N",
+        "metadata": {}
+      },
+      {
+        "id": "EXIT_E",
+        "position": {
+          "x": 970.0,
+          "y": 300.0
+        },
+        "type": "EXIT",
+        "capacity": 120.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:EXIT_E",
+        "metadata": {}
+      },
+      {
+        "id": "EXIT_S",
+        "position": {
+          "x": 500.0,
+          "y": 590.0
+        },
+        "type": "EXIT",
+        "capacity": 120.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:EXIT_S",
+        "metadata": {}
+      },
+      {
+        "id": "EXIT_W",
+        "position": {
+          "x": 30.0,
+          "y": 300.0
+        },
+        "type": "EXIT",
+        "capacity": 120.0,
+        "area_m2": 60.0,
+        "spatial_ref": "opening:EXIT_W",
+        "metadata": {}
+      },
+      {
+        "id": "EMERGENCY_1",
+        "position": {
+          "x": 30.0,
+          "y": 160.0
+        },
+        "type": "EMERGENCY_EXIT",
+        "capacity": 250.0,
+        "area_m2": 80.0,
+        "spatial_ref": "opening:EMERGENCY_1",
+        "metadata": {}
+      },
+      {
+        "id": "EMERGENCY_2",
+        "position": {
+          "x": 150.0,
+          "y": 590.0
+        },
+        "type": "EMERGENCY_EXIT",
+        "capacity": 250.0,
+        "area_m2": 80.0,
+        "spatial_ref": "opening:EMERGENCY_2",
+        "metadata": {}
+      },
+      {
+        "id": "CONCOURSE_N",
+        "position": {
+          "x": 500.0,
+          "y": 140.0
+        },
+        "type": "INTERSECTION",
+        "capacity": 150.0,
+        "area_m2": 60.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CONCOURSE_E",
+        "position": {
+          "x": 830.0,
+          "y": 300.0
+        },
+        "type": "INTERSECTION",
+        "capacity": 150.0,
+        "area_m2": 60.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CONCOURSE_S",
+        "position": {
+          "x": 500.0,
+          "y": 480.0
+        },
+        "type": "INTERSECTION",
+        "capacity": 150.0,
+        "area_m2": 60.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CONCOURSE_W",
+        "position": {
+          "x": 170.0,
+          "y": 300.0
+        },
+        "type": "INTERSECTION",
+        "capacity": 150.0,
+        "area_m2": 60.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CONCESSION_N",
+        "position": {
+          "x": 500.0,
+          "y": 185.0
+        },
+        "type": "CONCESSION",
+        "capacity": 80.0,
+        "area_m2": 100.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CONCESSION_S",
+        "position": {
+          "x": 500.0,
+          "y": 435.0
+        },
+        "type": "CONCESSION",
+        "capacity": 80.0,
+        "area_m2": 100.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CHECKPOINT_N",
+        "position": {
+          "x": 500.0,
+          "y": 240.0
+        },
+        "type": "CHECKPOINT",
+        "capacity": 90.0,
+        "area_m2": 30.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CHECKPOINT_E",
+        "position": {
+          "x": 770.0,
+          "y": 300.0
+        },
+        "type": "CHECKPOINT",
+        "capacity": 90.0,
+        "area_m2": 30.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CHECKPOINT_S",
+        "position": {
+          "x": 500.0,
+          "y": 380.0
+        },
+        "type": "CHECKPOINT",
+        "capacity": 90.0,
+        "area_m2": 30.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "CHECKPOINT_W",
+        "position": {
+          "x": 230.0,
+          "y": 300.0
+        },
+        "type": "CHECKPOINT",
+        "capacity": 90.0,
+        "area_m2": 30.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "SEAT_N",
+        "position": {
+          "x": 500.0,
+          "y": 280.0
+        },
+        "type": "ZONE",
+        "capacity": 5000.0,
+        "area_m2": 2500.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "SEAT_E",
+        "position": {
+          "x": 710.0,
+          "y": 300.0
+        },
+        "type": "ZONE",
+        "capacity": 5000.0,
+        "area_m2": 2500.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "SEAT_S",
+        "position": {
+          "x": 500.0,
+          "y": 340.0
+        },
+        "type": "ZONE",
+        "capacity": 5000.0,
+        "area_m2": 2500.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "SEAT_W",
+        "position": {
+          "x": 290.0,
+          "y": 300.0
+        },
+        "type": "ZONE",
+        "capacity": 5000.0,
+        "area_m2": 2500.0,
+        "spatial_ref": null,
+        "metadata": {}
+      },
+      {
+        "id": "PITCH",
+        "position": {
+          "x": 500.0,
+          "y": 310.0
+        },
+        "type": "ZONE",
+        "capacity": 8000.0,
+        "area_m2": 4000.0,
+        "spatial_ref": null,
+        "metadata": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "E_GA_CN",
+        "source": "GATE_A",
+        "destination": "CONCOURSE_N",
+        "length_m": 30.0,
+        "width_m": 7.0,
+        "capacity": 45.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_GA_CN"
+      },
+      {
+        "id": "E_GB_CN",
+        "source": "GATE_B",
+        "destination": "CONCOURSE_N",
+        "length_m": 30.0,
+        "width_m": 7.0,
+        "capacity": 45.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_GB_CN"
+      },
+      {
+        "id": "E_GC_CE",
+        "source": "GATE_C",
+        "destination": "CONCOURSE_E",
+        "length_m": 30.0,
+        "width_m": 7.0,
+        "capacity": 45.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_GC_CE"
+      },
+      {
+        "id": "E_GD_CE",
+        "source": "GATE_D",
+        "destination": "CONCOURSE_E",
+        "length_m": 30.0,
+        "width_m": 7.0,
+        "capacity": 45.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_GD_CE"
+      },
+      {
+        "id": "E_GE_CS",
+        "source": "GATE_E",
+        "destination": "CONCOURSE_S",
+        "length_m": 30.0,
+        "width_m": 7.0,
+        "capacity": 45.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_GE_CS"
+      },
+      {
+        "id": "E_GF_CS",
+        "source": "GATE_F",
+        "destination": "CONCOURSE_S",
+        "length_m": 30.0,
+        "width_m": 7.0,
+        "capacity": 45.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_GF_CS"
+      },
+      {
+        "id": "E_CN_CE",
+        "source": "CONCOURSE_N",
+        "destination": "CONCOURSE_E",
+        "length_m": 37.0,
+        "width_m": 8.0,
+        "capacity": 55.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CN_CE"
+      },
+      {
+        "id": "E_CE_CS",
+        "source": "CONCOURSE_E",
+        "destination": "CONCOURSE_S",
+        "length_m": 38.0,
+        "width_m": 8.0,
+        "capacity": 55.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CE_CS"
+      },
+      {
+        "id": "E_CS_CW",
+        "source": "CONCOURSE_S",
+        "destination": "CONCOURSE_W",
+        "length_m": 38.0,
+        "width_m": 8.0,
+        "capacity": 55.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CS_CW"
+      },
+      {
+        "id": "E_CW_CN",
+        "source": "CONCOURSE_W",
+        "destination": "CONCOURSE_N",
+        "length_m": 37.0,
+        "width_m": 8.0,
+        "capacity": 55.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CW_CN"
+      },
+      {
+        "id": "E_CN_XN",
+        "source": "CONCOURSE_N",
+        "destination": "EXIT_N",
+        "length_m": 20.0,
+        "width_m": 8.0,
+        "capacity": 50.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_CN_XN"
+      },
+      {
+        "id": "E_CE_XE",
+        "source": "CONCOURSE_E",
+        "destination": "EXIT_E",
+        "length_m": 20.0,
+        "width_m": 8.0,
+        "capacity": 50.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_CE_XE"
+      },
+      {
+        "id": "E_CS_XS",
+        "source": "CONCOURSE_S",
+        "destination": "EXIT_S",
+        "length_m": 20.0,
+        "width_m": 8.0,
+        "capacity": 50.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_CS_XS"
+      },
+      {
+        "id": "E_CW_XW",
+        "source": "CONCOURSE_W",
+        "destination": "EXIT_W",
+        "length_m": 20.0,
+        "width_m": 8.0,
+        "capacity": 50.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "OUTDOOR",
+        "geometry_id": "PATH_E_CW_XW"
+      },
+      {
+        "id": "E_CW_E1",
+        "source": "CONCOURSE_W",
+        "destination": "EMERGENCY_1",
+        "length_m": 20.0,
+        "width_m": 14.0,
+        "capacity": 160.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CW_E1"
+      },
+      {
+        "id": "E_CS_E2",
+        "source": "CONCOURSE_S",
+        "destination": "EMERGENCY_2",
+        "length_m": 20.0,
+        "width_m": 14.0,
+        "capacity": 160.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CS_E2"
+      },
+      {
+        "id": "E_CN_KN",
+        "source": "CONCOURSE_N",
+        "destination": "CONCESSION_N",
+        "length_m": 30.0,
+        "width_m": 4.0,
+        "capacity": 40.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CN_KN"
+      },
+      {
+        "id": "E_KN_CKN",
+        "source": "CONCESSION_N",
+        "destination": "CHECKPOINT_N",
+        "length_m": 30.0,
+        "width_m": 4.5,
+        "capacity": 45.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_KN_CKN"
+      },
+      {
+        "id": "E_CS_KS",
+        "source": "CONCOURSE_S",
+        "destination": "CONCESSION_S",
+        "length_m": 30.0,
+        "width_m": 4.0,
+        "capacity": 40.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CS_KS"
+      },
+      {
+        "id": "E_KS_CKS",
+        "source": "CONCESSION_S",
+        "destination": "CHECKPOINT_S",
+        "length_m": 30.0,
+        "width_m": 4.5,
+        "capacity": 45.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_KS_CKS"
+      },
+      {
+        "id": "E_CE_CKE",
+        "source": "CONCOURSE_E",
+        "destination": "CHECKPOINT_E",
+        "length_m": 20.0,
+        "width_m": 9.0,
+        "capacity": 70.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CE_CKE"
+      },
+      {
+        "id": "E_CW_CKW",
+        "source": "CONCOURSE_W",
+        "destination": "CHECKPOINT_W",
+        "length_m": 20.0,
+        "width_m": 9.0,
+        "capacity": 70.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CW_CKW"
+      },
+      {
+        "id": "E_CKN_SN",
+        "source": "CHECKPOINT_N",
+        "destination": "SEAT_N",
+        "length_m": 25.0,
+        "width_m": 9.0,
+        "capacity": 70.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CKN_SN"
+      },
+      {
+        "id": "E_CKE_SE",
+        "source": "CHECKPOINT_E",
+        "destination": "SEAT_E",
+        "length_m": 25.0,
+        "width_m": 9.0,
+        "capacity": 70.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CKE_SE"
+      },
+      {
+        "id": "E_CKS_SS",
+        "source": "CHECKPOINT_S",
+        "destination": "SEAT_S",
+        "length_m": 25.0,
+        "width_m": 9.0,
+        "capacity": 70.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CKS_SS"
+      },
+      {
+        "id": "E_CKW_SW",
+        "source": "CHECKPOINT_W",
+        "destination": "SEAT_W",
+        "length_m": 25.0,
+        "width_m": 9.0,
+        "capacity": 70.0,
+        "is_open": true,
+        "is_emergency": false,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CKW_SW"
+      },
+      {
+        "id": "E_SN_P",
+        "source": "SEAT_N",
+        "destination": "PITCH",
+        "length_m": 10.0,
+        "width_m": 12.0,
+        "capacity": 140.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_SN_P"
+      },
+      {
+        "id": "E_SE_P",
+        "source": "SEAT_E",
+        "destination": "PITCH",
+        "length_m": 21.0,
+        "width_m": 12.0,
+        "capacity": 140.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_SE_P"
+      },
+      {
+        "id": "E_SS_P",
+        "source": "SEAT_S",
+        "destination": "PITCH",
+        "length_m": 10.0,
+        "width_m": 12.0,
+        "capacity": 140.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_SS_P"
+      },
+      {
+        "id": "E_SW_P",
+        "source": "SEAT_W",
+        "destination": "PITCH",
+        "length_m": 21.0,
+        "width_m": 12.0,
+        "capacity": 140.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_SW_P"
+      },
+      {
+        "id": "E_CKW_E1",
+        "source": "CHECKPOINT_W",
+        "destination": "EMERGENCY_1",
+        "length_m": 20.0,
+        "width_m": 6.0,
+        "capacity": 160.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CKW_E1"
+      },
+      {
+        "id": "E_CKS_E2",
+        "source": "CHECKPOINT_S",
+        "destination": "EMERGENCY_2",
+        "length_m": 20.0,
+        "width_m": 6.0,
+        "capacity": 160.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CKS_E2"
+      }
+    ],
+    "metadata": {
+      "location": {
+        "lat": 41.5698,
+        "lon": 2.2586
+      }
     }
   },
-  "nodes": [
-    {
-      "id": "GATE_A",
-      "position": {
-        "x": 250,
-        "y": 30
+  "spatial": {
+    "venue_id": "unity_arena",
+    "coordinate_system": "LOCAL_METRIC",
+    "levels": [
+      {
+        "id": "L1",
+        "name": "Ground",
+        "elevation_m": 0.0,
+        "height_m": 5.0
+      }
+    ],
+    "structures": [
+      {
+        "id": "FLR",
+        "level_id": "L1",
+        "type": "FLOOR",
+        "polygon": {
+          "points": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 1000.0,
+              "y": 0.0
+            },
+            {
+              "x": 1000.0,
+              "y": 620.0
+            },
+            {
+              "x": 0.0,
+              "y": 620.0
+            }
+          ]
+        },
+        "height_m": 0.3,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "ENTRY",
-      "capacity": 100,
-      "area_m2": 60
-    },
-    {
-      "id": "GATE_B",
-      "position": {
-        "x": 750,
-        "y": 30
+      {
+        "id": "WALL_N",
+        "level_id": "L1",
+        "type": "WALL",
+        "polygon": {
+          "points": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 1000.0,
+              "y": 0.0
+            },
+            {
+              "x": 1000.0,
+              "y": 6.0
+            },
+            {
+              "x": 0.0,
+              "y": 6.0
+            }
+          ]
+        },
+        "height_m": 5.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "ENTRY",
-      "capacity": 100,
-      "area_m2": 60
-    },
-    {
-      "id": "GATE_C",
-      "position": {
-        "x": 970,
-        "y": 150
+      {
+        "id": "WALL_S",
+        "level_id": "L1",
+        "type": "WALL",
+        "polygon": {
+          "points": [
+            {
+              "x": 0.0,
+              "y": 614.0
+            },
+            {
+              "x": 1000.0,
+              "y": 614.0
+            },
+            {
+              "x": 1000.0,
+              "y": 620.0
+            },
+            {
+              "x": 0.0,
+              "y": 620.0
+            }
+          ]
+        },
+        "height_m": 5.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "ENTRY",
-      "capacity": 100,
-      "area_m2": 60
-    },
-    {
-      "id": "GATE_D",
-      "position": {
-        "x": 970,
-        "y": 450
+      {
+        "id": "WALL_E",
+        "level_id": "L1",
+        "type": "WALL",
+        "polygon": {
+          "points": [
+            {
+              "x": 994.0,
+              "y": 0.0
+            },
+            {
+              "x": 1000.0,
+              "y": 0.0
+            },
+            {
+              "x": 1000.0,
+              "y": 620.0
+            },
+            {
+              "x": 994.0,
+              "y": 620.0
+            }
+          ]
+        },
+        "height_m": 5.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "ENTRY",
-      "capacity": 100,
-      "area_m2": 60
-    },
-    {
-      "id": "GATE_E",
-      "position": {
-        "x": 750,
-        "y": 590
+      {
+        "id": "WALL_W",
+        "level_id": "L1",
+        "type": "WALL",
+        "polygon": {
+          "points": [
+            {
+              "x": 0.0,
+              "y": 0.0
+            },
+            {
+              "x": 6.0,
+              "y": 0.0
+            },
+            {
+              "x": 6.0,
+              "y": 620.0
+            },
+            {
+              "x": 0.0,
+              "y": 620.0
+            }
+          ]
+        },
+        "height_m": 5.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "ENTRY",
-      "capacity": 100,
-      "area_m2": 60
-    },
-    {
-      "id": "GATE_F",
-      "position": {
-        "x": 250,
-        "y": 590
+      {
+        "id": "FIELD",
+        "level_id": "L1",
+        "type": "FIELD",
+        "polygon": {
+          "points": [
+            {
+              "x": 420.0,
+              "y": 250.0
+            },
+            {
+              "x": 580.0,
+              "y": 250.0
+            },
+            {
+              "x": 580.0,
+              "y": 370.0
+            },
+            {
+              "x": 420.0,
+              "y": 370.0
+            }
+          ]
+        },
+        "height_m": 0.3,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "ENTRY",
-      "capacity": 100,
-      "area_m2": 60
-    },
-    {
-      "id": "EXIT_N",
-      "position": {
-        "x": 500,
-        "y": 30
+      {
+        "id": "SEAT_N_A",
+        "level_id": "L1",
+        "type": "SEATING",
+        "polygon": {
+          "points": [
+            {
+              "x": 380.0,
+              "y": 225.0
+            },
+            {
+              "x": 494.0,
+              "y": 225.0
+            },
+            {
+              "x": 494.0,
+              "y": 265.0
+            },
+            {
+              "x": 380.0,
+              "y": 265.0
+            }
+          ]
+        },
+        "height_m": 2.5,
+        "metadata": {
+          "source": "AUTHORED",
+          "tiers": 4
+        }
       },
-      "type": "EXIT",
-      "capacity": 120,
-      "area_m2": 60
-    },
-    {
-      "id": "EXIT_E",
-      "position": {
-        "x": 970,
-        "y": 300
+      {
+        "id": "SEAT_N_B",
+        "level_id": "L1",
+        "type": "SEATING",
+        "polygon": {
+          "points": [
+            {
+              "x": 506.0,
+              "y": 225.0
+            },
+            {
+              "x": 620.0,
+              "y": 225.0
+            },
+            {
+              "x": 620.0,
+              "y": 265.0
+            },
+            {
+              "x": 506.0,
+              "y": 265.0
+            }
+          ]
+        },
+        "height_m": 2.5,
+        "metadata": {
+          "source": "AUTHORED",
+          "tiers": 4
+        }
       },
-      "type": "EXIT",
-      "capacity": 120,
-      "area_m2": 60
-    },
-    {
-      "id": "EXIT_S",
-      "position": {
-        "x": 500,
-        "y": 590
+      {
+        "id": "SEAT_E",
+        "level_id": "L1",
+        "type": "SEATING",
+        "polygon": {
+          "points": [
+            {
+              "x": 585.0,
+              "y": 255.0
+            },
+            {
+              "x": 655.0,
+              "y": 255.0
+            },
+            {
+              "x": 655.0,
+              "y": 345.0
+            },
+            {
+              "x": 585.0,
+              "y": 345.0
+            }
+          ]
+        },
+        "height_m": 2.5,
+        "metadata": {
+          "source": "AUTHORED",
+          "tiers": 4
+        }
       },
-      "type": "EXIT",
-      "capacity": 120,
-      "area_m2": 60
-    },
-    {
-      "id": "EXIT_W",
-      "position": {
-        "x": 30,
-        "y": 300
+      {
+        "id": "SEAT_S_A",
+        "level_id": "L1",
+        "type": "SEATING",
+        "polygon": {
+          "points": [
+            {
+              "x": 380.0,
+              "y": 355.0
+            },
+            {
+              "x": 494.0,
+              "y": 355.0
+            },
+            {
+              "x": 494.0,
+              "y": 395.0
+            },
+            {
+              "x": 380.0,
+              "y": 395.0
+            }
+          ]
+        },
+        "height_m": 2.5,
+        "metadata": {
+          "source": "AUTHORED",
+          "tiers": 4
+        }
       },
-      "type": "EXIT",
-      "capacity": 120,
-      "area_m2": 60
-    },
-    {
-      "id": "EMERGENCY_1",
-      "position": {
-        "x": 30,
-        "y": 160
+      {
+        "id": "SEAT_S_B",
+        "level_id": "L1",
+        "type": "SEATING",
+        "polygon": {
+          "points": [
+            {
+              "x": 506.0,
+              "y": 355.0
+            },
+            {
+              "x": 620.0,
+              "y": 355.0
+            },
+            {
+              "x": 620.0,
+              "y": 395.0
+            },
+            {
+              "x": 506.0,
+              "y": 395.0
+            }
+          ]
+        },
+        "height_m": 2.5,
+        "metadata": {
+          "source": "AUTHORED",
+          "tiers": 4
+        }
       },
-      "type": "EMERGENCY_EXIT",
-      "capacity": 250,
-      "area_m2": 80
-    },
-    {
-      "id": "EMERGENCY_2",
-      "position": {
-        "x": 150,
-        "y": 590
+      {
+        "id": "SEAT_W",
+        "level_id": "L1",
+        "type": "SEATING",
+        "polygon": {
+          "points": [
+            {
+              "x": 345.0,
+              "y": 255.0
+            },
+            {
+              "x": 415.0,
+              "y": 255.0
+            },
+            {
+              "x": 415.0,
+              "y": 345.0
+            },
+            {
+              "x": 345.0,
+              "y": 345.0
+            }
+          ]
+        },
+        "height_m": 2.5,
+        "metadata": {
+          "source": "AUTHORED",
+          "tiers": 4
+        }
       },
-      "type": "EMERGENCY_EXIT",
-      "capacity": 250,
-      "area_m2": 80
-    },
-    {
-      "id": "CONCOURSE_N",
-      "position": {
-        "x": 500,
-        "y": 140
+      {
+        "id": "CONCOURSE_N",
+        "level_id": "L1",
+        "type": "CONCOURSE",
+        "polygon": {
+          "points": [
+            {
+              "x": 140.0,
+              "y": 110.0
+            },
+            {
+              "x": 860.0,
+              "y": 110.0
+            },
+            {
+              "x": 860.0,
+              "y": 150.0
+            },
+            {
+              "x": 140.0,
+              "y": 150.0
+            }
+          ]
+        },
+        "height_m": 0.4,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "INTERSECTION",
-      "capacity": 150,
-      "area_m2": 60
-    },
-    {
-      "id": "CONCOURSE_E",
-      "position": {
-        "x": 830,
-        "y": 300
+      {
+        "id": "CONCOURSE_E",
+        "level_id": "L1",
+        "type": "CONCOURSE",
+        "polygon": {
+          "points": [
+            {
+              "x": 800.0,
+              "y": 110.0
+            },
+            {
+              "x": 860.0,
+              "y": 110.0
+            },
+            {
+              "x": 860.0,
+              "y": 510.0
+            },
+            {
+              "x": 800.0,
+              "y": 510.0
+            }
+          ]
+        },
+        "height_m": 0.4,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "INTERSECTION",
-      "capacity": 150,
-      "area_m2": 60
-    },
-    {
-      "id": "CONCOURSE_S",
-      "position": {
-        "x": 500,
-        "y": 480
+      {
+        "id": "CONCOURSE_S",
+        "level_id": "L1",
+        "type": "CONCOURSE",
+        "polygon": {
+          "points": [
+            {
+              "x": 140.0,
+              "y": 470.0
+            },
+            {
+              "x": 860.0,
+              "y": 470.0
+            },
+            {
+              "x": 860.0,
+              "y": 510.0
+            },
+            {
+              "x": 140.0,
+              "y": 510.0
+            }
+          ]
+        },
+        "height_m": 0.4,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "INTERSECTION",
-      "capacity": 150,
-      "area_m2": 60
-    },
-    {
-      "id": "CONCOURSE_W",
-      "position": {
-        "x": 170,
-        "y": 300
+      {
+        "id": "CONCOURSE_W",
+        "level_id": "L1",
+        "type": "CONCOURSE",
+        "polygon": {
+          "points": [
+            {
+              "x": 140.0,
+              "y": 110.0
+            },
+            {
+              "x": 200.0,
+              "y": 110.0
+            },
+            {
+              "x": 200.0,
+              "y": 510.0
+            },
+            {
+              "x": 140.0,
+              "y": 510.0
+            }
+          ]
+        },
+        "height_m": 0.4,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "INTERSECTION",
-      "capacity": 150,
-      "area_m2": 60
-    },
-    {
-      "id": "CONCESSION_N",
-      "position": {
-        "x": 500,
-        "y": 185
+      {
+        "id": "CONCESSION_N",
+        "level_id": "L1",
+        "type": "ROOM",
+        "polygon": {
+          "points": [
+            {
+              "x": 495.0,
+              "y": 180.0
+            },
+            {
+              "x": 505.0,
+              "y": 180.0
+            },
+            {
+              "x": 505.0,
+              "y": 190.0
+            },
+            {
+              "x": 495.0,
+              "y": 190.0
+            }
+          ]
+        },
+        "height_m": 3.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "CONCESSION",
-      "capacity": 80,
-      "area_m2": 100
-    },
-    {
-      "id": "CONCESSION_S",
-      "position": {
-        "x": 500,
-        "y": 435
+      {
+        "id": "CONCESSION_S",
+        "level_id": "L1",
+        "type": "ROOM",
+        "polygon": {
+          "points": [
+            {
+              "x": 495.0,
+              "y": 430.0
+            },
+            {
+              "x": 505.0,
+              "y": 430.0
+            },
+            {
+              "x": 505.0,
+              "y": 440.0
+            },
+            {
+              "x": 495.0,
+              "y": 440.0
+            }
+          ]
+        },
+        "height_m": 3.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "CONCESSION",
-      "capacity": 80,
-      "area_m2": 100
-    },
-    {
-      "id": "CHECKPOINT_N",
-      "position": {
-        "x": 500,
-        "y": 240
+      {
+        "id": "CHECKPOINT_N",
+        "level_id": "L1",
+        "type": "ROOM",
+        "polygon": {
+          "points": [
+            {
+              "x": 496.0,
+              "y": 236.0
+            },
+            {
+              "x": 504.0,
+              "y": 236.0
+            },
+            {
+              "x": 504.0,
+              "y": 244.0
+            },
+            {
+              "x": 496.0,
+              "y": 244.0
+            }
+          ]
+        },
+        "height_m": 3.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "CHECKPOINT",
-      "capacity": 90,
-      "area_m2": 30
-    },
-    {
-      "id": "CHECKPOINT_E",
-      "position": {
-        "x": 770,
-        "y": 300
+      {
+        "id": "CHECKPOINT_E",
+        "level_id": "L1",
+        "type": "ROOM",
+        "polygon": {
+          "points": [
+            {
+              "x": 766.0,
+              "y": 296.0
+            },
+            {
+              "x": 774.0,
+              "y": 296.0
+            },
+            {
+              "x": 774.0,
+              "y": 304.0
+            },
+            {
+              "x": 766.0,
+              "y": 304.0
+            }
+          ]
+        },
+        "height_m": 3.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "CHECKPOINT",
-      "capacity": 90,
-      "area_m2": 30
-    },
-    {
-      "id": "CHECKPOINT_S",
-      "position": {
-        "x": 500,
-        "y": 380
+      {
+        "id": "CHECKPOINT_S",
+        "level_id": "L1",
+        "type": "ROOM",
+        "polygon": {
+          "points": [
+            {
+              "x": 496.0,
+              "y": 376.0
+            },
+            {
+              "x": 504.0,
+              "y": 376.0
+            },
+            {
+              "x": 504.0,
+              "y": 384.0
+            },
+            {
+              "x": 496.0,
+              "y": 384.0
+            }
+          ]
+        },
+        "height_m": 3.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
       },
-      "type": "CHECKPOINT",
-      "capacity": 90,
-      "area_m2": 30
-    },
-    {
-      "id": "CHECKPOINT_W",
-      "position": {
-        "x": 230,
-        "y": 300
+      {
+        "id": "CHECKPOINT_W",
+        "level_id": "L1",
+        "type": "ROOM",
+        "polygon": {
+          "points": [
+            {
+              "x": 226.0,
+              "y": 296.0
+            },
+            {
+              "x": 234.0,
+              "y": 296.0
+            },
+            {
+              "x": 234.0,
+              "y": 304.0
+            },
+            {
+              "x": 226.0,
+              "y": 304.0
+            }
+          ]
+        },
+        "height_m": 3.0,
+        "metadata": {
+          "source": "AUTHORED"
+        }
+      }
+    ],
+    "openings": [
+      {
+        "id": "GATE_A",
+        "level_id": "L1",
+        "type": "ENTRY_GATE",
+        "position": {
+          "x": 250.0,
+          "y": 30.0
+        },
+        "width_m": 7.0,
+        "rotation_deg": 0.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "GATE_A"
+        }
       },
-      "type": "CHECKPOINT",
-      "capacity": 90,
-      "area_m2": 30
-    },
-    {
-      "id": "SEAT_N",
-      "position": {
-        "x": 500,
-        "y": 280
+      {
+        "id": "GATE_B",
+        "level_id": "L1",
+        "type": "ENTRY_GATE",
+        "position": {
+          "x": 750.0,
+          "y": 30.0
+        },
+        "width_m": 7.0,
+        "rotation_deg": 0.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "GATE_B"
+        }
       },
-      "type": "ZONE",
-      "capacity": 5000,
-      "area_m2": 2500
-    },
-    {
-      "id": "SEAT_E",
-      "position": {
-        "x": 710,
-        "y": 300
+      {
+        "id": "GATE_C",
+        "level_id": "L1",
+        "type": "ENTRY_GATE",
+        "position": {
+          "x": 970.0,
+          "y": 150.0
+        },
+        "width_m": 7.0,
+        "rotation_deg": 90.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "GATE_C"
+        }
       },
-      "type": "ZONE",
-      "capacity": 5000,
-      "area_m2": 2500
-    },
-    {
-      "id": "SEAT_S",
-      "position": {
-        "x": 500,
-        "y": 340
+      {
+        "id": "GATE_D",
+        "level_id": "L1",
+        "type": "ENTRY_GATE",
+        "position": {
+          "x": 970.0,
+          "y": 450.0
+        },
+        "width_m": 7.0,
+        "rotation_deg": 90.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "GATE_D"
+        }
       },
-      "type": "ZONE",
-      "capacity": 5000,
-      "area_m2": 2500
-    },
-    {
-      "id": "SEAT_W",
-      "position": {
-        "x": 290,
-        "y": 300
+      {
+        "id": "GATE_E",
+        "level_id": "L1",
+        "type": "ENTRY_GATE",
+        "position": {
+          "x": 750.0,
+          "y": 590.0
+        },
+        "width_m": 7.0,
+        "rotation_deg": 180.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "GATE_E"
+        }
       },
-      "type": "ZONE",
-      "capacity": 5000,
-      "area_m2": 2500
-    },
-    {
-      "id": "PITCH",
-      "position": {
-        "x": 500,
-        "y": 310
+      {
+        "id": "GATE_F",
+        "level_id": "L1",
+        "type": "ENTRY_GATE",
+        "position": {
+          "x": 250.0,
+          "y": 590.0
+        },
+        "width_m": 7.0,
+        "rotation_deg": 180.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "GATE_F"
+        }
       },
-      "type": "ZONE",
-      "capacity": 8000,
-      "area_m2": 4000
+      {
+        "id": "EXIT_N",
+        "level_id": "L1",
+        "type": "EXIT_GATE",
+        "position": {
+          "x": 500.0,
+          "y": 30.0
+        },
+        "width_m": 8.0,
+        "rotation_deg": 0.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "EXIT_N"
+        }
+      },
+      {
+        "id": "EXIT_E",
+        "level_id": "L1",
+        "type": "EXIT_GATE",
+        "position": {
+          "x": 970.0,
+          "y": 300.0
+        },
+        "width_m": 8.0,
+        "rotation_deg": 90.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "EXIT_E"
+        }
+      },
+      {
+        "id": "EXIT_S",
+        "level_id": "L1",
+        "type": "EXIT_GATE",
+        "position": {
+          "x": 500.0,
+          "y": 590.0
+        },
+        "width_m": 8.0,
+        "rotation_deg": 180.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "EXIT_S"
+        }
+      },
+      {
+        "id": "EXIT_W",
+        "level_id": "L1",
+        "type": "EXIT_GATE",
+        "position": {
+          "x": 30.0,
+          "y": 300.0
+        },
+        "width_m": 8.0,
+        "rotation_deg": 270.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "EXIT_W"
+        }
+      },
+      {
+        "id": "EMERGENCY_1",
+        "level_id": "L1",
+        "type": "EMERGENCY_EXIT",
+        "position": {
+          "x": 30.0,
+          "y": 160.0
+        },
+        "width_m": 14.0,
+        "rotation_deg": 270.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "EMERGENCY_1"
+        }
+      },
+      {
+        "id": "EMERGENCY_2",
+        "level_id": "L1",
+        "type": "EMERGENCY_EXIT",
+        "position": {
+          "x": 150.0,
+          "y": 590.0
+        },
+        "width_m": 14.0,
+        "rotation_deg": 180.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "EMERGENCY_2"
+        }
+      }
+    ],
+    "paths": [
+      {
+        "id": "PATH_E_GA_CN",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 250.0,
+            "y": 30.0
+          },
+          {
+            "x": 500.0,
+            "y": 140.0
+          }
+        ],
+        "width_m": 7.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_GA_CN"
+        }
+      },
+      {
+        "id": "PATH_E_GB_CN",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 750.0,
+            "y": 30.0
+          },
+          {
+            "x": 500.0,
+            "y": 140.0
+          }
+        ],
+        "width_m": 7.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_GB_CN"
+        }
+      },
+      {
+        "id": "PATH_E_GC_CE",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 970.0,
+            "y": 150.0
+          },
+          {
+            "x": 830.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 7.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_GC_CE"
+        }
+      },
+      {
+        "id": "PATH_E_GD_CE",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 970.0,
+            "y": 450.0
+          },
+          {
+            "x": 830.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 7.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_GD_CE"
+        }
+      },
+      {
+        "id": "PATH_E_GE_CS",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 750.0,
+            "y": 590.0
+          },
+          {
+            "x": 500.0,
+            "y": 480.0
+          }
+        ],
+        "width_m": 7.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_GE_CS"
+        }
+      },
+      {
+        "id": "PATH_E_GF_CS",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 250.0,
+            "y": 590.0
+          },
+          {
+            "x": 500.0,
+            "y": 480.0
+          }
+        ],
+        "width_m": 7.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_GF_CS"
+        }
+      },
+      {
+        "id": "PATH_E_CN_CE",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 140.0
+          },
+          {
+            "x": 830.0,
+            "y": 140.0
+          },
+          {
+            "x": 830.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 8.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CN_CE"
+        }
+      },
+      {
+        "id": "PATH_E_CE_CS",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 830.0,
+            "y": 300.0
+          },
+          {
+            "x": 830.0,
+            "y": 480.0
+          },
+          {
+            "x": 500.0,
+            "y": 480.0
+          }
+        ],
+        "width_m": 8.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CE_CS"
+        }
+      },
+      {
+        "id": "PATH_E_CS_CW",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 480.0
+          },
+          {
+            "x": 170.0,
+            "y": 480.0
+          },
+          {
+            "x": 170.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 8.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CS_CW"
+        }
+      },
+      {
+        "id": "PATH_E_CW_CN",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 170.0,
+            "y": 300.0
+          },
+          {
+            "x": 170.0,
+            "y": 140.0
+          },
+          {
+            "x": 500.0,
+            "y": 140.0
+          }
+        ],
+        "width_m": 8.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CW_CN"
+        }
+      },
+      {
+        "id": "PATH_E_CN_XN",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 140.0
+          },
+          {
+            "x": 500.0,
+            "y": 30.0
+          }
+        ],
+        "width_m": 8.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CN_XN"
+        }
+      },
+      {
+        "id": "PATH_E_CE_XE",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 830.0,
+            "y": 300.0
+          },
+          {
+            "x": 970.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 8.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CE_XE"
+        }
+      },
+      {
+        "id": "PATH_E_CS_XS",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 480.0
+          },
+          {
+            "x": 500.0,
+            "y": 590.0
+          }
+        ],
+        "width_m": 8.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CS_XS"
+        }
+      },
+      {
+        "id": "PATH_E_CW_XW",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 170.0,
+            "y": 300.0
+          },
+          {
+            "x": 30.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 8.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CW_XW"
+        }
+      },
+      {
+        "id": "PATH_E_CW_E1",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 170.0,
+            "y": 300.0
+          },
+          {
+            "x": 30.0,
+            "y": 160.0
+          }
+        ],
+        "width_m": 14.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CW_E1"
+        }
+      },
+      {
+        "id": "PATH_E_CS_E2",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 480.0
+          },
+          {
+            "x": 150.0,
+            "y": 590.0
+          }
+        ],
+        "width_m": 14.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CS_E2"
+        }
+      },
+      {
+        "id": "PATH_E_CN_KN",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 140.0
+          },
+          {
+            "x": 500.0,
+            "y": 185.0
+          }
+        ],
+        "width_m": 4.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CN_KN"
+        }
+      },
+      {
+        "id": "PATH_E_KN_CKN",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 185.0
+          },
+          {
+            "x": 500.0,
+            "y": 240.0
+          }
+        ],
+        "width_m": 4.5,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_KN_CKN"
+        }
+      },
+      {
+        "id": "PATH_E_CS_KS",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 480.0
+          },
+          {
+            "x": 500.0,
+            "y": 435.0
+          }
+        ],
+        "width_m": 4.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CS_KS"
+        }
+      },
+      {
+        "id": "PATH_E_KS_CKS",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 435.0
+          },
+          {
+            "x": 500.0,
+            "y": 380.0
+          }
+        ],
+        "width_m": 4.5,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_KS_CKS"
+        }
+      },
+      {
+        "id": "PATH_E_CE_CKE",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 830.0,
+            "y": 300.0
+          },
+          {
+            "x": 770.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 9.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CE_CKE"
+        }
+      },
+      {
+        "id": "PATH_E_CW_CKW",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 170.0,
+            "y": 300.0
+          },
+          {
+            "x": 230.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 9.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CW_CKW"
+        }
+      },
+      {
+        "id": "PATH_E_CKN_SN",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 240.0
+          },
+          {
+            "x": 500.0,
+            "y": 280.0
+          }
+        ],
+        "width_m": 9.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CKN_SN"
+        }
+      },
+      {
+        "id": "PATH_E_CKE_SE",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 770.0,
+            "y": 300.0
+          },
+          {
+            "x": 710.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 9.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CKE_SE"
+        }
+      },
+      {
+        "id": "PATH_E_CKS_SS",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 380.0
+          },
+          {
+            "x": 500.0,
+            "y": 340.0
+          }
+        ],
+        "width_m": 9.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CKS_SS"
+        }
+      },
+      {
+        "id": "PATH_E_CKW_SW",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 230.0,
+            "y": 300.0
+          },
+          {
+            "x": 290.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 9.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CKW_SW"
+        }
+      },
+      {
+        "id": "PATH_E_SN_P",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 280.0
+          },
+          {
+            "x": 500.0,
+            "y": 310.0
+          }
+        ],
+        "width_m": 12.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_SN_P"
+        }
+      },
+      {
+        "id": "PATH_E_SE_P",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 710.0,
+            "y": 300.0
+          },
+          {
+            "x": 500.0,
+            "y": 310.0
+          }
+        ],
+        "width_m": 12.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_SE_P"
+        }
+      },
+      {
+        "id": "PATH_E_SS_P",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 340.0
+          },
+          {
+            "x": 500.0,
+            "y": 310.0
+          }
+        ],
+        "width_m": 12.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_SS_P"
+        }
+      },
+      {
+        "id": "PATH_E_SW_P",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 290.0,
+            "y": 300.0
+          },
+          {
+            "x": 500.0,
+            "y": 310.0
+          }
+        ],
+        "width_m": 12.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_SW_P"
+        }
+      },
+      {
+        "id": "PATH_E_CKW_E1",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 230.0,
+            "y": 300.0
+          },
+          {
+            "x": 30.0,
+            "y": 160.0
+          }
+        ],
+        "width_m": 6.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CKW_E1"
+        }
+      },
+      {
+        "id": "PATH_E_CKS_E2",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 380.0
+          },
+          {
+            "x": 150.0,
+            "y": 590.0
+          }
+        ],
+        "width_m": 6.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CKS_E2"
+        }
+      }
+    ],
+    "metadata": {
+      "source": "AUTHORED",
+      "notes": [
+        "Hand-authored architectural model for the Unity Arena demo.",
+        "Seating rendered as tiered slabs; concourse ring as four slabs.",
+        "Every edge has a linked PathGeometryModel (geometry_id)."
+      ]
     }
-  ],
-  "edges": [
-    {
-      "id": "e_ga_cn",
-      "source": "GATE_A",
-      "destination": "CONCOURSE_N",
-      "length_m": 30,
-      "width_m": 7,
-      "capacity": 45,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_gb_cn",
-      "source": "GATE_B",
-      "destination": "CONCOURSE_N",
-      "length_m": 30,
-      "width_m": 7,
-      "capacity": 45,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_gc_ce",
-      "source": "GATE_C",
-      "destination": "CONCOURSE_E",
-      "length_m": 30,
-      "width_m": 7,
-      "capacity": 45,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_gd_ce",
-      "source": "GATE_D",
-      "destination": "CONCOURSE_E",
-      "length_m": 30,
-      "width_m": 7,
-      "capacity": 45,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_ge_cs",
-      "source": "GATE_E",
-      "destination": "CONCOURSE_S",
-      "length_m": 30,
-      "width_m": 7,
-      "capacity": 45,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_gf_cs",
-      "source": "GATE_F",
-      "destination": "CONCOURSE_S",
-      "length_m": 30,
-      "width_m": 7,
-      "capacity": 45,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_cn_ce",
-      "source": "CONCOURSE_N",
-      "destination": "CONCOURSE_E",
-      "length_m": 37,
-      "width_m": 8,
-      "capacity": 55
-    },
-    {
-      "id": "e_ce_cs",
-      "source": "CONCOURSE_E",
-      "destination": "CONCOURSE_S",
-      "length_m": 38,
-      "width_m": 8,
-      "capacity": 55
-    },
-    {
-      "id": "e_cs_cw",
-      "source": "CONCOURSE_S",
-      "destination": "CONCOURSE_W",
-      "length_m": 38,
-      "width_m": 8,
-      "capacity": 55
-    },
-    {
-      "id": "e_cw_cn",
-      "source": "CONCOURSE_W",
-      "destination": "CONCOURSE_N",
-      "length_m": 37,
-      "width_m": 8,
-      "capacity": 55
-    },
-    {
-      "id": "e_cn_xn",
-      "source": "CONCOURSE_N",
-      "destination": "EXIT_N",
-      "length_m": 20,
-      "width_m": 8,
-      "capacity": 50,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_ce_xe",
-      "source": "CONCOURSE_E",
-      "destination": "EXIT_E",
-      "length_m": 20,
-      "width_m": 8,
-      "capacity": 50,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_cs_xs",
-      "source": "CONCOURSE_S",
-      "destination": "EXIT_S",
-      "length_m": 20,
-      "width_m": 8,
-      "capacity": 50,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_cw_xw",
-      "source": "CONCOURSE_W",
-      "destination": "EXIT_W",
-      "length_m": 20,
-      "width_m": 8,
-      "capacity": 50,
-      "exposure": "OUTDOOR"
-    },
-    {
-      "id": "e_cw_e1",
-      "source": "CONCOURSE_W",
-      "destination": "EMERGENCY_1",
-      "length_m": 20,
-      "width_m": 14,
-      "capacity": 160,
-      "is_emergency": true
-    },
-    {
-      "id": "e_cs_e2",
-      "source": "CONCOURSE_S",
-      "destination": "EMERGENCY_2",
-      "length_m": 20,
-      "width_m": 14,
-      "capacity": 160,
-      "is_emergency": true
-    },
-    {
-      "id": "e_cn_kn",
-      "source": "CONCOURSE_N",
-      "destination": "CONCESSION_N",
-      "length_m": 30,
-      "width_m": 4.0,
-      "capacity": 40
-    },
-    {
-      "id": "e_kn_ckn",
-      "source": "CONCESSION_N",
-      "destination": "CHECKPOINT_N",
-      "length_m": 30,
-      "width_m": 4.5,
-      "capacity": 45
-    },
-    {
-      "id": "e_cs_ks",
-      "source": "CONCOURSE_S",
-      "destination": "CONCESSION_S",
-      "length_m": 30,
-      "width_m": 4.0,
-      "capacity": 40
-    },
-    {
-      "id": "e_ks_cks",
-      "source": "CONCESSION_S",
-      "destination": "CHECKPOINT_S",
-      "length_m": 30,
-      "width_m": 4.5,
-      "capacity": 45
-    },
-    {
-      "id": "e_ce_cke",
-      "source": "CONCOURSE_E",
-      "destination": "CHECKPOINT_E",
-      "length_m": 20,
-      "width_m": 9,
-      "capacity": 70
-    },
-    {
-      "id": "e_cw_ckw",
-      "source": "CONCOURSE_W",
-      "destination": "CHECKPOINT_W",
-      "length_m": 20,
-      "width_m": 9,
-      "capacity": 70
-    },
-    {
-      "id": "e_ckn_sn",
-      "source": "CHECKPOINT_N",
-      "destination": "SEAT_N",
-      "length_m": 25,
-      "width_m": 9,
-      "capacity": 70
-    },
-    {
-      "id": "e_cke_se",
-      "source": "CHECKPOINT_E",
-      "destination": "SEAT_E",
-      "length_m": 25,
-      "width_m": 9,
-      "capacity": 70
-    },
-    {
-      "id": "e_cks_ss",
-      "source": "CHECKPOINT_S",
-      "destination": "SEAT_S",
-      "length_m": 25,
-      "width_m": 9,
-      "capacity": 70
-    },
-    {
-      "id": "e_ckw_sw",
-      "source": "CHECKPOINT_W",
-      "destination": "SEAT_W",
-      "length_m": 25,
-      "width_m": 9,
-      "capacity": 70
-    },
-    {
-      "id": "e_sn_p",
-      "source": "SEAT_N",
-      "destination": "PITCH",
-      "length_m": 10,
-      "width_m": 12,
-      "capacity": 140,
-      "is_emergency": true
-    },
-    {
-      "id": "e_se_p",
-      "source": "SEAT_E",
-      "destination": "PITCH",
-      "length_m": 21,
-      "width_m": 12,
-      "capacity": 140,
-      "is_emergency": true
-    },
-    {
-      "id": "e_ss_p",
-      "source": "SEAT_S",
-      "destination": "PITCH",
-      "length_m": 10,
-      "width_m": 12,
-      "capacity": 140,
-      "is_emergency": true
-    },
-    {
-      "id": "e_sw_p",
-      "source": "SEAT_W",
-      "destination": "PITCH",
-      "length_m": 21,
-      "width_m": 12,
-      "capacity": 140,
-      "is_emergency": true
-    },
-    {
-      "id": "e_ckw_e1",
-      "source": "CHECKPOINT_W",
-      "destination": "EMERGENCY_1",
-      "capacity": 160,
-      "length_m": 20,
-      "width_m": 6.0,
-      "is_emergency": true
-    },
-    {
-      "id": "e_cks_e2",
-      "source": "CHECKPOINT_S",
-      "destination": "EMERGENCY_2",
-      "capacity": 160,
-      "length_m": 20,
-      "width_m": 6.0,
-      "is_emergency": true
-    }
-  ]
+  }
 }

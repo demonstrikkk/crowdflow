@@ -1,19 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, FileUp, Loader2, MapPin, Search, Sparkles, Waypoints } from 'lucide-react';
 import { useSimulation } from '../store/SimulationContext';
-import { api } from '../lib/api';
 
 interface CreateTwinProps {
   onReady: (venueId: string) => void;
+  onReviewBlueprint: (file: File) => void;
 }
 
-export default function CreateTwinView({ onReady }: CreateTwinProps) {
+export default function CreateTwinView({ onReady, onReviewBlueprint }: CreateTwinProps) {
   const s = useSimulation();
   const [query, setQuery] = useState('');
-  const [importing, setImporting] = useState(false);
   const [building, setBuilding] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [importResult, setImportResult] = useState<{ id: string; nodes: number; edges: number; confidence: number; degraded: boolean } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const venues = s.venues.filter((v) => v.name.toLowerCase().includes(query.trim().toLowerCase()));
@@ -22,31 +19,6 @@ export default function CreateTwinView({ onReady }: CreateTwinProps) {
     void s.refreshCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const importBlueprint = useCallback(
-    async (file: File) => {
-      setImporting(true);
-      setError(null);
-      setImportResult(null);
-      try {
-        const result = await api.importBlueprint(file);
-        await s.refreshCatalog();
-        setImportResult({
-          id: result.venue.id,
-          nodes: result.venue.nodes.length,
-          edges: result.venue.edges.length,
-          confidence: result.confidence,
-          degraded: result.degraded,
-        });
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Blueprint import failed');
-      } finally {
-        setImporting(false);
-        if (fileRef.current) fileRef.current.value = '';
-      }
-    },
-    [s],
-  );
 
   const build = useCallback(
     async (venueId: string) => {
@@ -95,14 +67,8 @@ export default function CreateTwinView({ onReady }: CreateTwinProps) {
                 }}
                 aria-label="Upload venue blueprint image"
               >
-                {importing ? (
-                  <Loader2 className="h-5 w-5 text-od-muted animate-spin" />
-                ) : (
-                  <>
-                    <FileUp className="h-5 w-5 text-od-ink" />
-                    <span className="text-[10px] uppercase tracking-[0.16em] text-od-muted">PNG / JPG / WEBP / PDF</span>
-                  </>
-                )}
+                <FileUp className="h-5 w-5 text-od-ink" />
+                <span className="text-[10px] uppercase tracking-[0.16em] text-od-muted">PNG / JPG / WEBP / PDF</span>
               </div>
               <input
                 ref={fileRef}
@@ -112,31 +78,24 @@ export default function CreateTwinView({ onReady }: CreateTwinProps) {
                 aria-label="Upload venue blueprint image"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) void importBlueprint(file);
+                  if (file) onReviewBlueprint(file);
+                  e.target.value = '';
                 }}
               />
 
-              {importResult && (
-                <div className="border border-od-line bg-od-canvas px-3 py-2.5 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] uppercase tracking-[0.18em] text-od-muted">Extraction</span>
-                    <span className={`chip ${importResult.degraded ? 'is-warn' : 'is-active'}`}>
-                      {importResult.degraded ? 'degraded' : 'full'}
-                    </span>
-                  </div>
-                  <div className="num text-od-ink">
-                    {importResult.nodes} nodes · {importResult.edges} walkways
-                  </div>
-                  <div className="text-[10px] text-od-muted">
-                    confidence {Math.round(importResult.confidence * 100)}% — verify uncertain areas on the venue
-                  </div>
-                  <button className="btn btn-solid w-full mt-1" onClick={() => void build(importResult.id)}>
-                    BUILD TWIN <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+              <div className="border border-od-line bg-od-canvas px-3 py-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[9px] uppercase tracking-[0.18em] text-od-muted">Review before building</span>
+                  <span className="chip">
+                    <span className="status-dot is-ok" />
+                    correct
+                  </span>
                 </div>
-              )}
-
-              {error && <p className="text-[10px] uppercase tracking-[0.1em] text-od-danger">{error}</p>}
+                <p className="mt-1 text-[10px] leading-relaxed text-od-muted">
+                  Detections open in a review canvas so you can correct gates, regions, walls and labels before the
+                  twin is reconstructed.
+                </p>
+              </div>
             </div>
 
             {/* right: select */}

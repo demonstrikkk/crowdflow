@@ -12,6 +12,8 @@ import Timeline from './Timeline';
 import StatusBar from './StatusBar';
 import EmptyState from './EmptyState';
 import GuidedCard from './GuidedCard';
+import { ViewRail } from './ViewRail';
+import { HumanBehaviourOverlay, type BehaviourField } from './HumanBehaviourOverlay';
 
 const SPEEDS = [10, 30, 80, 240];
 
@@ -24,6 +26,7 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
   const s = useSimulation();
   const [selected, setSelected] = useState<Selection | null>(null);
   const [drafts, setDrafts] = useState<DraftState | null>(null);
+  const [behaviourField, setBehaviourField] = useState<BehaviourField>('stress');
   const [env, setEnv] = useState<ExternalEnvironment | null>(null);
   const [scope, setScope] = useState<CanvasScope>('venue');
   const [panelOpen, setPanelOpen] = useState<boolean>(() => {
@@ -244,8 +247,14 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
       />
 
       <div className="flex min-h-0 flex-1">
+        <ViewRail viewMode={s.viewMode} onChange={s.setViewMode} />
         <div className="relative min-w-0 flex-1">
-          {mode === 'compare' ? (            <div className="absolute inset-0 grid grid-cols-2 divide-x divide-od-line">
+          {s.viewMode === 'behaviour' && (
+            <HumanBehaviourOverlay field={behaviourField} onFieldChange={setBehaviourField} />
+          )}
+
+          {mode === 'compare' ? (
+            <div className="absolute inset-0 grid grid-cols-2 divide-x divide-od-line">
               <div className="relative min-w-0">
                 <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 border border-od-line bg-od-panel px-2 py-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-od-soft" />
@@ -333,6 +342,7 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
             onApplyCf={() => void s.applyCounterfactual()}
             runCounterfactual={s.runCounterfactual}
             onClosePanel={() => setPanelOpen(false)}
+            viewMode={s.viewMode}
           />
         ) : (
           <button

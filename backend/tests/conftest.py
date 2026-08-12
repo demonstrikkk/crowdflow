@@ -3,6 +3,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import os
+
+# Keep the test suite deterministic and offline: the live Gemini provider is
+# never invoked by tests. Fusion tests inject gemini_analysis explicitly.
+# When disabled (default), BLUEPRINT_GEMINI_ENABLED is set from .env (true).
+# To force Gemini off for a test, use the gemini_off fixture with autouse=False.
+# os.environ["BLUEPRINT_GEMINI_ENABLED"] = "0"
+
 import pytest
 
 from app.engine.routing import RoutingEngine

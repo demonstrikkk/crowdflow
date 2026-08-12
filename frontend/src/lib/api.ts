@@ -3,6 +3,8 @@ import type {
   AiInterpretResponse,
   AiProviderStatus,
   AiSuggestResponse,
+  ArchitecturalScene,
+  BlueprintDetectionResult,
   BlueprintResult,
   Bottleneck,
   ExternalEnvironment,
@@ -11,7 +13,9 @@ import type {
   ScenarioDelta,
   ScenarioModel,
   SimulationState,
+  VenueDigitalTwin,
   VenueModel,
+  VenueSpatialModel,
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000/api';
@@ -54,6 +58,98 @@ export const api = {
     );
   },
 
+  detectBlueprint: (file: File) => {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return fetch(`${API_BASE}/blueprint/detect`, { method: 'POST', body: form }).then(
+      async (res) => {
+        if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? res.statusText);
+        return (await res.json()) as BlueprintDetectionResult;
+      },
+    );
+  },
+
+  reconstructBlueprint: (detection: BlueprintDetectionResult) => {
+    const parts = (detection.provider ?? 'cv').split('+');
+    return request<BlueprintResult>('/blueprint/reconstruct', {
+      method: 'POST',
+      body: JSON.stringify({
+        image: detection.image,
+        detections: detection.detections,
+        provider: parts[0] || 'cv',
+        ocr_provider: parts[1] || null,
+        gemini_analysis: detection.gemini_analysis ?? null,
+        architectural_scene: detection.architectural_scene ?? null,
+      }),
+    });
+  },
+
+  /** ANALYZE stage: perception + Gemini, returns detections + architectural scene for review. */
+  analyzeBlueprint: (file: File) => {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return fetch(`${API_BASE}/blueprint/analyze`, { method: 'POST', body: form }).then(
+      async (res) => {
+        if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? res.statusText);
+        return (await res.json()) as BlueprintDetectionResult;
+      },
+    );
+  },
+
+  /** BUILD stage: ArchitecturalScene → StadiumProfile → VenueSpatialModel (draft, not persisted). */
+  buildBlueprint: (detection: BlueprintDetectionResult) => {
+    const parts = (detection.provider ?? 'cv').split('+');
+    return request<BlueprintResult>('/blueprint/build', {
+      method: 'POST',
+      body: JSON.stringify({
+        image: detection.image,
+        detections: detection.detections,
+        provider: parts[0] || 'cv',
+        ocr_provider: parts[1] || null,
+        gemini_analysis: detection.gemini_analysis ?? null,
+        architectural_scene: detection.architectural_scene ?? null,
+      }),
+    });
+  },
+
+  /** COMMIT stage: validate + persist a reconstruction. Returns 422 if quality gate fails. */
+  commitBlueprint: (detection: BlueprintDetectionResult) => {
+    const parts = (detection.provider ?? 'cv').split('+');
+    return request<BlueprintResult>('/blueprint/commit', {
+      method: 'POST',
+      body: JSON.stringify({
+        image: detection.image,
+        detections: detection.detections,
+        provider: parts[0] || 'cv',
+        ocr_provider: parts[1] || null,
+        gemini_analysis: detection.gemini_analysis ?? null,
+        architectural_scene: detection.architectural_scene ?? null,
+      }),
+    });
+  },
+
+  /** Retrieve persisted ArchitecturalScene for a venue. */
+  venueArchitecture: (id: string) => request<ArchitecturalScene>(`/blueprint/${id}/architecture`),
+
+  /** Retrieve persisted Canonical2D model for a venue. */
+  venueCanonical: (id: string) => request<Record<string, unknown>>(`/blueprint/${id}/canonical`),
+
+
+  venueSpatial: (id: string) => request<VenueSpatialModel>(`/venues/${id}/spatial`),
+  saveVenueSpatial: (id: string, spatial: VenueSpatialModel) =>
+    request<VenueSpatialModel>(`/venues/${id}/spatial`, {
+      method: 'PUT',
+      body: JSON.stringify(spatial),
+    }),
+
+  /** Canonical digital twin: structured semantic model + navigation + validation. */
+  venueTwin: (id: string) => request<VenueDigitalTwin>(`/venues/${id}/twin`),
+  saveVenueTwin: (id: string, twin: VenueDigitalTwin) =>
+    request<VenueDigitalTwin>(`/venues/${id}/twin`, {
+      method: 'PUT',
+      body: JSON.stringify(twin),
+    }),
+
   listScenarios: () => request<ScenarioModel[]>('/scenarios'),
   scenario: (id: string) => request<ScenarioModel>(`/scenarios/${id}`),
   createScenario: (scenario: ScenarioModel) =>
@@ -87,6 +183,11 @@ export const api = {
     request<{ speed: number }>(`/simulation/${simId}/speed`, {
       method: 'POST',
       body: JSON.stringify({ speed }),
+    }),
+  scrubSimulation: (simId: string, targetTMin: number) =>
+    request<SimulationState>('/simulation/scrub', {
+      method: 'POST',
+      body: JSON.stringify({ sim_id: simId, target_t_min: targetTMin }),
     }),
   emergency: (simId: string, active: boolean) =>
     request<SimulationState>(`/simulation/${simId}/emergency`, {

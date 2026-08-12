@@ -5,6 +5,9 @@
 #   - opencv-python-headless: line/edge detection for wall + gate extraction
 #   - PyMuPDF: vector blueprints (PDF/SVG export from CAD tools)
 #   - pytesseract: text labels (GATE A, EXIT 3, FOOD) -> semantic kinds
+#   - google-genai: Gemini Vision architectural reasoning layer (Phase A of
+#     the reconstruction correctness reset); optional, behind
+#     BLUEPRINT_GEMINI_ENABLED=true + GEMINI_API_KEY
 #
 # pytesseract additionally requires the Tesseract OCR binary on the system:
 #   https://github.com/tesseract-ocr/tesseract
@@ -14,3 +17,5 @@
 opencv-python-headless==4.10.0.84
 PyMuPDF==1.24.10
 pytesseract==0.3.13
+google-genai>=1.0
+python-dotenv>=1.0

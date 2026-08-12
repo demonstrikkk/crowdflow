@@ -95,6 +95,31 @@ def run_simulation(request: RunRequest):
     return engine.state()
 
 
+class ScrubRequest(BaseModel):
+    sim_id: str
+    target_t_min: float = 0.0
+
+
+@router.post("/scrub", response_model=SimulationState)
+def scrub_to(req: ScrubRequest):
+    """Fast-forward a paused simulation to a target simulation time deterministically.
+
+    Resets the engine to t=0 keeping the same scenario/seed, then ticks
+    forward to target_t_min. The engine is left in PAUSED state so the
+    caller can inspect the result before resuming live playback.
+    """
+    engine = _get_engine(req.sim_id)
+    target_ticks = max(0, int(req.target_t_min / TICK_DT_MIN))
+    engine.reset()
+    engine.play()
+    for _ in range(target_ticks):
+        engine.tick()
+    engine.pause()
+    return engine.state()
+
+
+
+
 @router.get("/{sim_id}", response_model=SimulationState)
 def get_simulation_state(sim_id: str):
     return _get_engine(sim_id).state()

@@ -500,12 +500,11 @@ function Builder({ venue, onChange }: BuilderProps) {
   );
 }
 
-export default function VenueBuilderView() {
+export default function VenueBuilderView({ onReviewBlueprint }: { onReviewBlueprint: (file: File) => void }) {
   const { venues, refreshCatalog } = useSimulation();
   const [draft, setDraft] = useState<VenueModel | null>(null);
   const [source, setSource] = useState<string>('');
   const [saving, setSaving] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [noticeTone, setNoticeTone] = useState<'ok' | 'err'>('ok');
   const fileRef = useRef<HTMLInputElement>(null);
@@ -517,41 +516,6 @@ export default function VenueBuilderView() {
       setSource(v.id);
     }
   }, [venues, draft]);
-
-  const importBlueprint = useCallback(
-    async (file: File) => {
-      setImporting(true);
-      setNotice(null);
-      try {
-        const result = await api.importBlueprint(file);
-        setDraft({ ...result.venue });
-        setSource(result.venue.id);
-        await refreshCatalog();
-        const level =
-          result.degradation_level === 0
-            ? 'full'
-            : result.degradation_level === 1
-              ? 'geometry-only'
-              : result.degradation_level === 2
-                ? 'heuristic'
-                : 'template';
-        const flagged = result.degraded ? ` — degraded (${level})` : '';
-        const notes = result.notes.length ? ` ${result.notes.join(' ')}` : '';
-        setNotice(
-          `Imported '${result.venue.name}': ${result.venue.nodes.length} nodes, ` +
-            `${result.venue.edges.length} walkways, confidence ${Math.round(result.confidence * 100)}%${flagged}.${notes}`,
-        );
-        setNoticeTone('ok');
-      } catch (e) {
-        setNotice(e instanceof Error ? e.message : 'Blueprint import failed');
-        setNoticeTone('err');
-      } finally {
-        setImporting(false);
-        if (fileRef.current) fileRef.current.value = '';
-      }
-    },
-    [refreshCatalog],
-  );
 
   const save = useCallback(async () => {
     if (!draft) return;
@@ -622,12 +586,13 @@ export default function VenueBuilderView() {
           aria-label="Upload venue blueprint image"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) void importBlueprint(file);
+            if (file) onReviewBlueprint(file);
+            e.target.value = '';
           }}
         />
-        <button onClick={() => fileRef.current?.click()} disabled={importing} className="btn btn-ghost">
+        <button onClick={() => fileRef.current?.click()} className="btn btn-ghost">
           <Upload className="h-3.5 w-3.5" />
-          {importing ? 'Importing…' : 'Import blueprint'}
+          Import &amp; review
         </button>
         <div className="ml-auto flex items-center gap-3">
           {notice && (

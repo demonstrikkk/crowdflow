@@ -65,7 +65,7 @@ def build_venue(
     gate_positions: List[Tuple[str, Tuple[float, float]]] = []
 
     for i, gate in enumerate(gates):
-        nid = _id("B", i + 1)
+        nid = gate.get("id") or _id("B", i + 1)
         pos_px = gate["position"]
         pos_m = (pos_px[0] * scale, pos_px[1] * scale)
         ntype = _GATE_TYPES.get(gate.get("kind", "ENTRY"), NodeType.ENTRY)
@@ -74,7 +74,7 @@ def build_venue(
 
     interior_positions: List[Tuple[str, Tuple[float, float]]] = []
     for i, node in enumerate(interior):
-        nid = _id("I", i + 1)
+        nid = node.get("id") or _id("I", i + 1)
         pos_px = node["position"]
         pos_m = (pos_px[0] * scale, pos_px[1] * scale)
         ntype = NodeType.INTERSECTION

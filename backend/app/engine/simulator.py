@@ -74,6 +74,17 @@ class Agent:
     waiting_since: Optional[float] = None
     is_rerouted: bool = False
     is_emergency: bool = False
+    patience: float = 1.0
+    stress: float = 0.0
+    excitement: float = 0.5
+    fatigue: float = 0.0
+    heat_exposure: float = 0.0
+    hydration: float = 1.0
+    perceived_crowding: float = 0.0
+    incident_awareness: bool = False
+    group_id: Optional[str] = None
+    group_type: str = "INDIVIDUAL"
+    current_intention: str = "ENTER"
 
     def to_model(self, pos: Position) -> AgentModel:
         return AgentModel(
@@ -85,6 +96,17 @@ class Agent:
             scale_units=self.scale_units,
             is_rerouted=self.is_rerouted,
             is_emergency=self.is_emergency,
+            patience=self.patience,
+            stress=self.stress,
+            excitement=self.excitement,
+            fatigue=self.fatigue,
+            heat_exposure=self.heat_exposure,
+            hydration=self.hydration,
+            perceived_crowding=self.perceived_crowding,
+            incident_awareness=self.incident_awareness,
+            group_id=self.group_id,
+            group_type=self.group_type,
+            current_intention=self.current_intention,
         )
 
 
@@ -369,6 +391,66 @@ class SimulationEngine:
         self.routing.set_avoid_edges(affected_edges)
         self._recompute_multipliers()
 
+    def _update_weather_transition(self) -> None:
+        """Update weather metrics over time dynamically."""
+        if not self.weather:
+            self.weather = WeatherSpec(
+                condition="CLEAR",
+                capacity_multiplier=1.0,
+                speed_multiplier=1.0,
+                unsafe_outdoor=False,
+                applies_outdoor_only=True,
+                temperature=25.0,
+                humidity=0.5,
+                wind_speed_mps=2.0,
+                visibility=1.0,
+                uv_index=1.0,
+                heat_index=25.0
+            )
+
+        if self.weather.condition == "HEAT" or self.weather.temperature >= 35.0:
+            if self.t_min < 180:
+                self.weather.temperature = 35.0 + 7.0 * (self.t_min / 180.0)
+            else:
+                self.weather.temperature = 42.0 - 4.0 * ((self.t_min - 180) / 120.0)
+            
+            if self.t_min < 60:
+                self.weather.uv_index = 8.0 + 2.0 * (self.t_min / 60.0)
+            elif self.t_min < 180:
+                self.weather.uv_index = 10.0 * (1.0 - (self.t_min - 60) / 120.0)
+            else:
+                self.weather.uv_index = 0.0
+
+            self.weather.humidity = 0.65
+            self.weather.wind_speed_mps = 1.5
+            self.weather.heat_index = self.weather.temperature + 0.1 * self.weather.humidity * self.weather.temperature
+            self.weather.speed_multiplier = max(0.5, 1.0 - 0.015 * max(0.0, self.weather.temperature - 30.0))
+            self.weather.capacity_multiplier = max(0.6, 1.0 - 0.01 * max(0.0, self.weather.temperature - 30.0))
+        elif self.weather.condition in ("HEAVY_RAIN", "RAIN", "STORM"):
+            self.weather.temperature = max(18.0, 26.0 - 0.02 * self.t_min)
+            self.weather.humidity = 0.95
+            self.weather.wind_speed_mps = 8.0 if self.weather.condition == "STORM" else 4.0
+            self.weather.visibility = max(0.3, 0.9 - 0.001 * self.t_min)
+            self.weather.uv_index = 1.0
+            self.weather.heat_index = self.weather.temperature
+            if self.weather.condition == "STORM":
+                self.weather.unsafe_outdoor = True
+                self.weather.speed_multiplier = 0.5
+                self.weather.capacity_multiplier = 0.4
+            else:
+                self.weather.unsafe_outdoor = False
+                self.weather.speed_multiplier = 0.7
+                self.weather.capacity_multiplier = 0.6
+        else:
+            self.weather.temperature = max(18.0, 22.0 - 0.01 * self.t_min)
+            self.weather.humidity = 0.5
+            self.weather.wind_speed_mps = 3.0
+            self.weather.visibility = 1.0
+            self.weather.uv_index = max(0.0, 5.0 - 0.02 * self.t_min)
+            self.weather.heat_index = self.weather.temperature
+
+        self._recompute_multipliers()
+
     def _point_distance(self, a: Position, b: Position) -> float:
         return math.hypot(a.x - b.x, a.y - b.y)
 
@@ -465,15 +547,69 @@ class SimulationEngine:
         budget = self._spawn_budget + rate_per_min * TICK_DT_MIN / self.scale
         count = math.floor(budget)
         self._spawn_budget = budget - count
-        for _ in range(count):
+        
+        i = 0
+        while i < count:
             if self.total_spawned + self.scale > self.scenario.crowd_size:
                 break
+            
+            roll = self.rng.random()
+            if roll < 0.30:
+                group_type = "FAMILY"
+                group_size = self.rng.randint(2, 4)
+            elif roll < 0.60:
+                group_type = "FRIENDS"
+                group_size = self.rng.randint(2, 5)
+            elif roll < 0.75:
+                group_type = "FANS"
+                group_size = self.rng.randint(3, 6)
+            elif roll < 0.80:
+                group_type = "VIP"
+                group_size = self.rng.randint(1, 2)
+            elif roll < 0.85:
+                group_type = "STAFF"
+                group_size = 1
+            elif roll < 0.90:
+                group_type = "VENDOR"
+                group_size = 1
+            elif roll < 0.95:
+                group_type = "MEDIA"
+                group_size = 1
+            else:
+                group_type = "INDIVIDUAL"
+                group_size = 1
+                
+            group_id = f"g_{self.tick_count}_{self._next_agent_id}" if group_size > 1 else None
             gate = self._weighted_choice(self.gate_distribution())
             destination = self._weighted_choice(self.destination_distribution())
             route = self.routing.find_path(gate, destination)
             if not route:
+                i += 1
                 continue
-            self._add_agent(gate, destination, route)
+                
+            for _ in range(group_size):
+                if self.total_spawned + self.scale > self.scenario.crowd_size:
+                    break
+                agent = self._add_agent(gate, destination, list(route))
+                if agent:
+                    agent.group_id = group_id
+                    agent.group_type = group_type
+                    if group_type == "FAMILY":
+                        agent.speed_mps = self.rng.uniform(0.8, 1.1)
+                        agent.patience = 0.8
+                    elif group_type == "VIP":
+                        agent.speed_mps = self.rng.uniform(1.1, 1.3)
+                        agent.excitement = 0.3
+                    elif group_type == "FANS":
+                        agent.speed_mps = self.rng.uniform(1.2, 1.5)
+                        agent.excitement = 0.9
+                        agent.patience = 0.6
+                    elif group_type == "STAFF":
+                        agent.speed_mps = self.rng.uniform(1.1, 1.4)
+                        agent.patience = 0.9
+                    else:
+                        agent.speed_mps = self.rng.uniform(1.0, 1.4)
+                i += 1
 
     def _spawn_leavers(self, rate_per_min: float) -> None:
         if self.total_spawned >= self.scenario.crowd_size:
@@ -481,14 +617,41 @@ class SimulationEngine:
         budget = self._spawn_budget + rate_per_min * TICK_DT_MIN / self.scale
         count = math.floor(budget)
         self._spawn_budget = budget - count
-        for _ in range(count):
+        
+        i = 0
+        while i < count:
             if self.total_spawned + self.scale > self.scenario.crowd_size:
                 break
+                
+            roll = self.rng.random()
+            if roll < 0.40:
+                group_type = "FAMILY"
+                group_size = self.rng.randint(2, 4)
+            elif roll < 0.80:
+                group_type = "FRIENDS"
+                group_size = self.rng.randint(2, 4)
+            else:
+                group_type = "INDIVIDUAL"
+                group_size = 1
+                
+            group_id = f"g_leave_{self.tick_count}_{self._next_agent_id}" if group_size > 1 else None
             zone = self._weighted_choice(self.destination_distribution())
             exit_id = self._weighted_choice(self.exit_distribution())
-            agent = self._add_agent(zone, exit_id, [zone])
-            if agent is not None:
-                self._reroute(agent, exit_id)
+            
+            for _ in range(group_size):
+                if self.total_spawned + self.scale > self.scenario.crowd_size:
+                    break
+                agent = self._add_agent(zone, exit_id, [zone])
+                if agent is not None:
+                    agent.group_id = group_id
+                    agent.group_type = group_type
+                    agent.current_intention = "EXIT"
+                    if group_type == "FAMILY":
+                        agent.speed_mps = self.rng.uniform(0.8, 1.1)
+                    else:
+                        agent.speed_mps = self.rng.uniform(1.0, 1.3)
+                    self._reroute(agent, exit_id)
+                i += 1
 
     def _add_agent(self, origin: str, destination: str, route: List[str]) -> Optional[Agent]:
         if len(self.agents) >= self.max_agents:
@@ -568,18 +731,98 @@ class SimulationEngine:
     def _step_agent(self, agent: Agent) -> None:
         if agent.completed_at is not None or agent.idle:
             return
+
+        # 1. Cohesion Factor (Group cohesion check)
+        cohesion_multiplier = 1.0
+        if agent.group_id:
+            group_members = [a for a in self.agents if a.group_id == agent.group_id and a.id != agent.id]
+            if group_members:
+                for member in group_members:
+                    if len(member.route) > len(agent.route):
+                        cohesion_multiplier = 0.05  # wait for them to catch up
+                        break
+                    elif len(member.route) == len(agent.route) and member.progress < agent.progress - 0.15:
+                        cohesion_multiplier = 0.5  # slow down to stay close
+                        break
+
+        # 2. Environmental Impacts on physiological/emotional states
+        if self.weather:
+            is_outdoor = False
+            if agent.on_edge:
+                u, v = agent.on_edge
+                is_outdoor = self._edge_outdoor(u, v)
+            elif agent.on_node:
+                node = self.graph.node(agent.on_node)
+                is_outdoor = bool(node and getattr(node, "exposure", None) == "OUTDOOR")
+            
+            if is_outdoor:
+                # Accumulate heat exposure and lose hydration outdoors
+                exposure_rate = 0.001 * (max(0.0, self.weather.temperature - 25.0) / 10.0) * (self.weather.uv_index / 2.0 + 0.5)
+                agent.heat_exposure = min(1.0, agent.heat_exposure + exposure_rate)
+                
+                hydro_rate = 0.002 * (max(0.0, self.weather.temperature - 25.0) / 10.0)
+                agent.hydration = max(0.0, agent.hydration - hydro_rate)
+                
+                agent.fatigue = min(1.0, agent.fatigue + 0.001 * (agent.heat_exposure + 1.0))
+            else:
+                # Indoor / Concourse recovery
+                agent.heat_exposure = max(0.0, agent.heat_exposure - 0.003)
+                if agent.on_node and self.graph.node_type(agent.on_node) == NodeType.CONCESSION:
+                    agent.hydration = min(1.0, agent.hydration + 0.1)
+                    agent.fatigue = max(0.0, agent.fatigue - 0.03)
+
+        # 3. Crowd Crowding density & Stress update
+        current_density = 0.0
+        if agent.on_edge:
+            u, v = agent.on_edge
+            current_density = self.edges[(u, v)].density
+        elif agent.on_node:
+            current_density = self.nodes[agent.on_node].density
+        
+        agent.perceived_crowding = min(1.0, current_density / 4.0)
+
+        # Stress accumulation
+        stress_accum = 0.0
+        if agent.perceived_crowding > 0.6:
+            stress_accum += 0.002 * (agent.perceived_crowding - 0.6)
+        if agent.heat_exposure > 0.5:
+            stress_accum += 0.001 * (agent.heat_exposure - 0.5)
+        if agent.hydration < 0.4:
+            stress_accum += 0.001 * (0.4 - agent.hydration)
+        if agent.waiting_since is not None:
+            waited = self.t_min - agent.waiting_since
+            stress_accum += 0.003 * waited
+        
+        agent.stress = min(1.0, agent.stress + stress_accum)
+
+        # Patience updates
+        agent.patience = max(0.0, 1.0 - 0.6 * agent.stress - 0.4 * agent.fatigue)
+
+        # Intention dynamics: seek water if dehydrated and not exiting/evacuating
+        if agent.hydration < 0.3 and agent.current_intention not in ("WATER", "EXIT") and not self.emergency_active:
+            concessions = [n.id for n in self.venue.nodes if self.graph.node_type(n.id) == NodeType.CONCESSION]
+            if concessions:
+                current = agent.on_node or (agent.on_edge[0] if agent.on_edge else agent.route[0])
+                concessions.sort(key=lambda cid: len(self.routing.find_path(current, cid) or [0]*999))
+                target_concession = concessions[0]
+                if self._reroute(agent, target_concession):
+                    agent.current_intention = "WATER"
+
+        # 4. Movement execution with speed multipliers
         if agent.on_edge is not None:
             u, v = agent.on_edge
             edge_state = self.edges[(u, v)]
             util = edge_state.utilisation
-            # crowds keep free-flow pace up to capacity; only overloaded
-            # walkways (utilisation > 1.0) slow movement down; weather/incident
-            # multipliers also slow outdoor routes
+            
             speed_factor = 1.0 if util <= 1.0 else max(0.25, 1.0 - 0.3 * (util - 1.0))
             speed_factor *= self._edge_speed_factor(u, v)
-            length = self.graph.edge_length(u, v)
-            step = agent.speed_mps * speed_factor * (TICK_DT_MIN * 60.0) / length
+            
+            state_speed_mult = 1.0 - 0.25 * agent.fatigue - 0.15 * agent.heat_exposure
+            state_speed_mult = max(0.3, state_speed_mult)
+            
+            step = agent.speed_mps * speed_factor * state_speed_mult * cohesion_multiplier * (TICK_DT_MIN * 60.0) / self.graph.edge_length(u, v)
             agent.progress += step
+            
             if agent.progress >= 1.0:
                 agent.on_edge = None
                 agent.on_node = v
@@ -589,8 +832,10 @@ class SimulationEngine:
                 self.edges[(u, v)].people -= agent.scale_units
                 self.edges[(u, v)].completions += agent.scale_units
                 self._arrive(agent)
+                
         if agent.completed_at is not None or agent.idle:
             return
+            
         if agent.on_node is not None and len(agent.route) >= 2:
             u, v = agent.route[0], agent.route[1]
             edge_state = self.edges[(u, v)]
@@ -638,6 +883,21 @@ class SimulationEngine:
             node == agent.destination
             and self.graph.node_type(node) in (NodeType.ZONE, NodeType.CONCESSION)
         )
+        
+        if at_destination and agent.current_intention == "WATER":
+            agent.hydration = 1.0
+            agent.fatigue = max(0.0, agent.fatigue - 0.2)
+            agent.heat_exposure = max(0.0, agent.heat_exposure - 0.2)
+            agent.current_intention = "ENTER"
+            phase = self.current_phase()
+            if phase and self._spawn_mode(phase) == "EXIT_SURGE":
+                dest = self._weighted_choice(self.exit_distribution())
+                agent.current_intention = "EXIT"
+            else:
+                dest = self._weighted_choice(self.destination_distribution())
+            self._reroute(agent, dest)
+            return
+
         phase = self.current_phase()
         if at_destination and phase is not None and self._spawn_mode(phase) == "EXIT_SURGE":
             self._reroute(agent, self._weighted_choice(self.exit_distribution()))
@@ -667,9 +927,12 @@ class SimulationEngine:
             if agent.waiting_since is None or agent.is_rerouted:
                 continue
             waited = self.t_min - agent.waiting_since
-            if waited >= 1.0 and self.rng.random() < 0.05:
-                self._reroute(agent, agent.destination)
-                agent.is_rerouted = True
+            reroute_threshold = 0.5 + 0.5 * agent.patience
+            if waited >= reroute_threshold:
+                reroute_prob = 0.05 + 0.15 * (1.0 - agent.patience)
+                if self.rng.random() < reroute_prob:
+                    self._reroute(agent, agent.destination)
+                    agent.is_rerouted = True
 
     # ------------------------------------------------------------------ #
     #  Main tick
@@ -680,6 +943,7 @@ class SimulationEngine:
         self.tick_count += 1
         self.t_min += TICK_DT_MIN
         self._update_incident()
+        self._update_weather_transition()
 
         phase = self.current_phase()
         phase_name = self.phase_name()
@@ -858,6 +1122,12 @@ class SimulationEngine:
             risk_level=risk_level,
             risk_score=round(max_risk, 3),
             clearance_time_min=round(clearance, 1) if clearance is not None else None,
+            # Living crowd state aggregates
+            avg_stress=round(sum(a.stress for a in self.agents) / len(self.agents), 3) if self.agents else 0.0,
+            avg_fatigue=round(sum(a.fatigue for a in self.agents) / len(self.agents), 3) if self.agents else 0.0,
+            avg_patience=round(sum(a.patience for a in self.agents) / len(self.agents), 3) if self.agents else 1.0,
+            avg_hydration=round(sum(a.hydration for a in self.agents) / len(self.agents), 3) if self.agents else 1.0,
+            water_seekers=sum(1 for a in self.agents if getattr(a, 'current_intention', '') == 'WATER'),
         )
 
         self._update_history()
@@ -1191,6 +1461,121 @@ class SimulationEngine:
             )
         return Position(x=0, y=0)
 
+    def _build_causal_graph(self) -> "CausalGraph":
+        """Deterministically build a causal influence graph from live simulation state."""
+        from ..models import CausalGraph, CausalNode, CausalLink
+
+        nodes: list = []
+        links: list = []
+
+        def _risk_state(score: float) -> str:
+            if score >= 0.75:
+                return "CRITICAL"
+            elif score >= 0.45:
+                return "WARNING"
+            return "NORMAL"
+
+        # Weather node
+        if self.weather:
+            temp = self.weather.temperature
+            temp_state = "CRITICAL" if temp >= 40 else ("WARNING" if temp >= 32 else "NORMAL")
+            nodes.append(CausalNode(
+                id="weather",
+                label="Weather",
+                value=f"{temp:.0f}\u00b0C / {self.weather.condition}",
+                state=temp_state,
+            ))
+            if self.weather.speed_multiplier < 0.9:
+                speed_val = f"{self.weather.speed_multiplier * 100:.0f}% normal speed"
+                speed_st = "CRITICAL" if self.weather.speed_multiplier < 0.6 else "WARNING"
+                nodes.append(CausalNode(id="walking_speed", label="Walking Speed", value=speed_val, state=speed_st))
+                links.append(CausalLink(source="weather", target="walking_speed", label="reduces"))
+            if temp >= 32:
+                avg_hydration = (
+                    sum(a.hydration for a in self.agents) / len(self.agents)
+                ) if self.agents else 1.0
+                hyd_state = "CRITICAL" if avg_hydration < 0.4 else ("WARNING" if avg_hydration < 0.65 else "NORMAL")
+                nodes.append(CausalNode(
+                    id="hydration",
+                    label="Hydration Demand",
+                    value=f"Avg {avg_hydration * 100:.0f}%",
+                    state=hyd_state,
+                ))
+                links.append(CausalLink(source="weather", target="hydration", label="drives"))
+
+        # Incident node
+        if self.incident:
+            nodes.append(CausalNode(
+                id="incident",
+                label="Incident",
+                value=f"{self.incident.type} @ {self.incident.location}",
+                state="CRITICAL",
+            ))
+            if self._hazard_edges:
+                nodes.append(CausalNode(
+                    id="blocked_routes",
+                    label="Blocked Routes",
+                    value=f"{len(self._hazard_edges)} edge(s) blocked",
+                    state="CRITICAL",
+                ))
+                links.append(CausalLink(source="incident", target="blocked_routes", label="blocks"))
+
+        # Top bottlenecks (up to 3)
+        bottlenecks = self.bottlenecks()
+        for i, bn in enumerate(bottlenecks[:3]):
+            bn_id = f"bottleneck_{i}"
+            nodes.append(CausalNode(
+                id=bn_id,
+                label=f"Bottleneck: {bn.location}",
+                value=f"{bn.capacity_utilisation * 100:.0f}% util / Q:{bn.queue}",
+                state=_risk_state(bn.capacity_utilisation),
+            ))
+            if self.weather and self.weather.speed_multiplier < 0.9:
+                links.append(CausalLink(source="walking_speed", target=bn_id, label="worsens"))
+            if self.incident and self._hazard_edges:
+                links.append(CausalLink(source="blocked_routes", target=bn_id, label="causes"))
+
+        # Crowd stress node
+        if self.agents:
+            avg_stress = sum(a.stress for a in self.agents) / len(self.agents)
+            avg_patience = sum(a.patience for a in self.agents) / len(self.agents)
+            st = _risk_state(avg_stress)
+            nodes.append(CausalNode(
+                id="crowd_stress",
+                label="Crowd Stress",
+                value=f"Stress:{avg_stress * 100:.0f}% Pat:{avg_patience * 100:.0f}%",
+                state=st,
+            ))
+            for i in range(min(len(bottlenecks), 3)):
+                links.append(CausalLink(source=f"bottleneck_{i}", target="crowd_stress", label="raises"))
+            if self.weather and self.weather.temperature >= 35:
+                links.append(CausalLink(source="weather", target="crowd_stress", label="amplifies"))
+
+            # Route switching
+            rerouted = sum(1 for a in self.agents if a.is_rerouted)
+            if rerouted > 0:
+                rt_state = "CRITICAL" if rerouted > len(self.agents) * 0.3 else "WARNING"
+                nodes.append(CausalNode(
+                    id="route_switching",
+                    label="Route Switching",
+                    value=f"{rerouted} agents rerouting",
+                    state=rt_state,
+                ))
+                links.append(CausalLink(source="crowd_stress", target="route_switching", label="causes"))
+
+            # Secondary congestion prediction
+            if self.metrics.risk_level.value in ("HIGH", "CRITICAL"):
+                nodes.append(CausalNode(
+                    id="secondary_congestion",
+                    label="Secondary Congestion",
+                    value=f"Global risk: {self.metrics.risk_level.value}",
+                    state="CRITICAL" if self.metrics.risk_level.value == "CRITICAL" else "WARNING",
+                ))
+                if rerouted > 0:
+                    links.append(CausalLink(source="route_switching", target="secondary_congestion", label="creates"))
+
+        return CausalGraph(nodes=nodes, links=links)
+
     def state(self, include_agents: bool = True) -> SimulationState:
         bottlenecks = self.bottlenecks()
         agent_models: List[AgentModel] = []
@@ -1231,6 +1616,7 @@ class SimulationEngine:
                     "edges": sorted(["|".join(k) for k in self._hazard_edges]),
                 }
             ] if (self.incident and (self._hazard_nodes or self._hazard_edges)) else [],
+            causal_graph=self._build_causal_graph(),
         )
 
     # ------------------------------------------------------------------ #

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
-import type { ElementState, Intervention, SimulationState, VenueModel } from '../../lib/types';
+import type { ElementState, Intervention, SimulationState, VenueModel, ViewMode } from '../../lib/types';
 import { riskState } from '../../lib/format';
 import type { Mode, Selection } from '../../lib/selection';
 import type { DraftState, RedirectDraft } from './InstrumentCanvas';
+import { WeatherPanel } from './WeatherPanel';
+import { CausalGraphPanel } from './CausalGraphPanel';
 
 export interface PanelProps {
   mode: Mode;
@@ -25,6 +27,7 @@ export interface PanelProps {
   onApplyCf: () => void;
   runCounterfactual: (intervention: Intervention) => Promise<string | null>;
   onClosePanel?: () => void;
+  viewMode?: ViewMode;
 }
 
 function fmt(n: number | undefined | null, digits = 0) {
@@ -515,7 +518,7 @@ function CompareReadout({ sim, cfSim, cfError }: { sim: SimulationState | null; 
 }
 
 export default function ContextPanel(props: PanelProps) {
-  const { mode, sim, selected, onSelect, guidedCta } = props;
+  const { mode, sim, selected, onSelect, guidedCta, viewMode } = props;
   return (
     <aside className="hidden w-80 shrink-0 flex-col border-l border-od-line bg-od-panel lg:flex">
       <div className="flex shrink-0 items-center justify-between border-b border-od-line px-3 py-2">
@@ -543,11 +546,20 @@ export default function ContextPanel(props: PanelProps) {
           <CompareReadout sim={sim} cfSim={props.cfSim} cfError={props.cfError} />
         ) : mode === 'investigate' ? (
           <>
+            {sim?.weather && viewMode === 'weather' && (
+              <WeatherPanel weather={sim.weather as any} metrics={sim.metrics} />
+            )}
             <BottleneckRegister sim={sim} onSelect={onSelect} />
+            {sim?.causal_graph && viewMode !== 'infrastructure' && (
+              <CausalGraphPanel graph={sim.causal_graph} />
+            )}
             {selected && <ObjectDetail sim={sim} venue={props.venue} selected={selected} />}
           </>
         ) : (
           <>
+            {sim?.weather && viewMode === 'weather' && (
+              <WeatherPanel weather={sim.weather as any} metrics={sim.metrics} />
+            )}
             {guidedCta && (
               <button
                 className="w-full border border-od-warn border-l-2 border-l-od-warn bg-od-warn-soft text-left px-2.5 py-2.5 cursor-pointer transition-colors hover:bg-od-warn-soft"
@@ -560,6 +572,9 @@ export default function ContextPanel(props: PanelProps) {
               </button>
             )}
             <SystemReadout sim={sim} onSelect={onSelect} />
+            {sim?.causal_graph && viewMode !== 'infrastructure' && (
+              <CausalGraphPanel graph={sim.causal_graph} />
+            )}
             {selected && <ObjectDetail sim={sim} venue={props.venue} selected={selected} />}
           </>
         )}

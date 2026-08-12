@@ -24,7 +24,23 @@ export type InterventionType =
   | 'SET_WEATHER';
 
 export type IncidentType = 'FIRE' | 'SECURITY' | 'STRUCTURAL';
-export type WeatherCondition = 'HEAVY_RAIN' | 'HAIL' | 'HEAT' | 'FOG' | 'CLEAR';
+export type WeatherCondition =
+  | 'HEAVY_RAIN' | 'RAIN' | 'HAIL' | 'HEAT' | 'FOG' | 'CLEAR' | 'STORM';
+
+export type GroupType =
+  | 'INDIVIDUAL' | 'FAMILY' | 'FRIENDS' | 'FANS'
+  | 'VIP' | 'STAFF' | 'VENDOR' | 'MEDIA' | 'EMERGENCY';
+
+export type AgentIntention =
+  | 'ENTER' | 'SEAT' | 'TOILET' | 'CONCESSION'
+  | 'EXIT' | 'SHADE' | 'WATER';
+
+export type ViewMode =
+  | 'command' | 'stadium' | 'crowd' | 'agent'
+  | 'security' | 'density' | 'flow' | 'route'
+  | 'emergency' | 'weather' | 'behaviour' | 'infrastructure'
+  | 'replay' | 'compare';
+
 
 export interface Position {
   x: number;
@@ -37,6 +53,7 @@ export interface NodeModel {
   type: NodeType;
   capacity?: number | null;
   area_m2?: number | null;
+  spatial_ref?: string | null;
   metadata: Record<string, unknown>;
 }
 
@@ -50,6 +67,7 @@ export interface EdgeModel {
   is_open: boolean;
   is_emergency: boolean;
   exposure?: 'INDOOR' | 'OUTDOOR';
+  geometry_id?: string | null;
 }
 
 export interface VenueModel {
@@ -59,6 +77,80 @@ export interface VenueModel {
   height: number;
   nodes: NodeModel[];
   edges: EdgeModel[];
+}
+
+// --------------------------------------------------------------------------- //
+//  VenueSpatialModel (architectural twin: walls, structures, openings, paths)
+// --------------------------------------------------------------------------- //
+export interface Point2D {
+  x: number;
+  y: number;
+}
+
+export interface Polygon2D {
+  points: Point2D[];
+}
+
+export interface LevelModel {
+  id: string;
+  name: string;
+  elevation_m?: number;
+  height_m?: number;
+}
+
+export type StructureType =
+  | 'FLOOR'
+  | 'WALL'
+  | 'FIELD'
+  | 'SEATING'
+  | 'CONCOURSE'
+  | 'ROOM'
+  | 'STAIR'
+  | 'ROOF'
+  | 'ZONE'
+  | 'STAIRS'
+  | 'COLUMN'
+  | 'OBSTACLE'
+  | 'VOMITORY';
+
+export interface StructureModel {
+  id: string;
+  level_id: string;
+  type: StructureType;
+  polygon: Polygon2D;
+  height_m?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export type OpeningType = 'ENTRY_GATE' | 'EXIT_GATE' | 'EMERGENCY_EXIT' | 'DOOR' | 'WINDOW';
+
+export interface OpeningModel {
+  id: string;
+  level_id: string;
+  type: OpeningType;
+  position: Point2D;
+  width_m?: number;
+  rotation_deg?: number;
+  is_emergency?: boolean;
+  metadata?: Record<string, unknown>;
+}
+
+export interface PathGeometryModel {
+  id: string;
+  level_id: string;
+  centerline: Point2D[];
+  width_m?: number;
+  metadata?: Record<string, unknown>;
+}
+
+export interface VenueSpatialModel {
+  venue_id: string;
+  coordinate_system?: string;
+  levels: LevelModel[];
+  structures: StructureModel[];
+  openings: OpeningModel[];
+  paths: PathGeometryModel[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface BlueprintElement {
@@ -71,14 +163,96 @@ export interface BlueprintElement {
   source: 'GEOMETRY' | 'OCR' | 'CLASSIFIER' | 'TEMPLATE';
 }
 
+export type ElementReportStatus = 'ACCEPTED' | 'REVIEW' | 'REJECTED';
+
+export interface ElementReport {
+  id: string;
+  kind: string;
+  confidence: number;
+  source: string;
+  status: ElementReportStatus;
+  warning?: string | null;
+}
+
+export interface ReconstructionReport {
+  summary: string;
+  overall_confidence: number;
+  elements: ElementReport[];
+  warnings: string[];
+  unresolved: string[];
+}
+
 export interface BlueprintResult {
   venue: VenueModel;
+  spatial?: VenueSpatialModel | null;
   elements: BlueprintElement[];
   confidence: number;
   degradation_level: number;
   degraded: boolean;
   steps: Record<string, string>;
   notes: string[];
+  report?: ReconstructionReport | null;
+}
+
+export type DetectionKind =
+  | 'WALL'
+  | 'BOUNDARY'
+  | 'REGION'
+  | 'ROOM'
+  | 'ZONE'
+  | 'FIELD'
+  | 'SEATING'
+  | 'CONCOURSE'
+  | 'DOOR'
+  | 'GATE'
+  | 'STAIR'
+  | 'CORRIDOR'
+  | 'TEXT';
+
+export interface Point2D {
+  x: number;
+  y: number;
+}
+
+export interface Detection {
+  id: string;
+  kind: DetectionKind;
+  geometry: {
+    type: 'SEGMENT' | 'POLYGON' | 'POINT' | 'POLYLINE';
+    point?: Point2D | null;
+    p0?: Point2D | null;
+    p1?: Point2D | null;
+    polygon?: Point2D[] | null;
+    polyline?: Point2D[] | null;
+    bbox?: [number, number, number, number] | null;
+  };
+  text?: string | null;
+  confidence: number;
+  source?: string;
+  level_id?: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface BlueprintImageMeta {
+  filename: string;
+  format: string;
+  page: number;
+  pages: number;
+  width_px: number;
+  height_px: number;
+  deskew_deg: number;
+  width_m: number;
+  height_m: number;
+  scale_m_per_px: number;
+}
+
+export interface BlueprintDetectionResult {
+  image: BlueprintImageMeta;
+  detections: Detection[];
+  provider: string;
+  warnings: string[];
+  gemini_analysis?: Record<string, unknown> | null;
+  architectural_scene?: ArchitecturalScene | null;
 }
 
 export interface EventPhaseModel {
@@ -113,6 +287,17 @@ export interface AgentModel {
   scale_units: number;
   is_rerouted: boolean;
   is_emergency: boolean;
+  patience: number;
+  stress: number;
+  excitement: number;
+  fatigue: number;
+  heat_exposure: number;
+  hydration: number;
+  perceived_crowding: number;
+  incident_awareness: boolean;
+  group_id: string | null;
+  group_type: GroupType;
+  current_intention: AgentIntention;
 }
 
 export interface ElementState {
@@ -141,12 +326,38 @@ export interface IncidentModel {
 }
 
 export interface WeatherModel {
-  condition: WeatherCondition;
+  condition: WeatherCondition | string;
+  temperature: number;
+  humidity: number;
+  wind_speed_mps: number;
+  visibility: number;
+  uv_index: number;
+  heat_index: number;
   capacity_multiplier: number;
   speed_multiplier: number;
   unsafe_outdoor: boolean;
   applies_outdoor_only?: boolean;
 }
+
+// Causal influence graph (built server-side each tick)
+export interface CausalNode {
+  id: string;
+  label: string;
+  value: string;
+  state: 'NORMAL' | 'WARNING' | 'CRITICAL';
+}
+
+export interface CausalLink {
+  source: string;
+  target: string;
+  label: string | null;
+}
+
+export interface CausalGraph {
+  nodes: CausalNode[];
+  links: CausalLink[];
+}
+
 
 export interface HazardZone {
   location: string | null;
@@ -172,6 +383,12 @@ export interface SimulationMetrics {
   risk_level: RiskLevel;
   risk_score: number;
   clearance_time_min?: number | null;
+  // Living crowd state aggregates
+  avg_stress: number;
+  avg_fatigue: number;
+  avg_patience: number;
+  avg_hydration: number;
+  water_seekers: number;
 }
 
 export interface Bottleneck {
@@ -242,7 +459,9 @@ export interface SimulationState {
   weather?: WeatherModel | null;
   hazard_zones?: HazardZone[];
   external?: ExternalState | null;
+  causal_graph?: CausalGraph | null;
 }
+
 
 // --------------------------------------------------------------------------- //
 //  External environment / road network (backend /api/environment + sim.external)
@@ -370,4 +589,318 @@ export interface AiSuggestion {
 export interface AiSuggestResponse {
   provider: string;
   suggestions: AiSuggestion[];
+}
+
+// ---------------------------------------------------------------------------
+//  Architectural Scene types (spec §60)
+//  These mirror the Python Pydantic models in architecture/models.py
+// ---------------------------------------------------------------------------
+
+export type EntityType =
+  | 'FIELD' | 'SEATING_BOWL' | 'SEATING_BLOCK' | 'CONCOURSE' | 'CORRIDOR'
+  | 'AISLE' | 'VOMITORY' | 'STAIR' | 'RAMP' | 'ELEVATOR' | 'ENTRY' | 'EXIT'
+  | 'EMERGENCY_EXIT' | 'SERVICE_ENTRY' | 'CHECKPOINT' | 'CONCESSION'
+  | 'CAFETERIA' | 'WASHROOM' | 'MEDICAL' | 'VIP' | 'MEDIA' | 'SERVICE'
+  | 'ROOM' | 'WALL' | 'COLUMN' | 'ROOF' | 'ZONE';
+
+export type EntitySource = 'BLUEPRINT' | 'GEMINI' | 'FLORENCE' | 'CV' | 'FUSED' | 'PROCEDURAL' | 'USER';
+
+export interface ArchitecturalLocation {
+  normalized_x?: number | null;
+  normalized_y?: number | null;
+  normalized_polygon?: [number, number][] | null;
+  description?: string | null;
+}
+
+export interface EvidenceItem {
+  source: EntitySource;
+  description: string;
+  confidence: number;
+}
+
+export interface ArchitecturalRegion {
+  id: string;
+  type: EntityType;
+  label: string;
+  level_id: string;
+  location: ArchitecturalLocation;
+  confidence: number;
+  source: EntitySource;
+  evidence: EvidenceItem[];
+  metadata: Record<string, unknown>;
+}
+
+export interface ArchitecturalOpening {
+  id: string;
+  type: EntityType;
+  label: string;
+  level_id: string;
+  location: ArchitecturalLocation;
+  confidence: number;
+  source: EntitySource;
+  evidence: EvidenceItem[];
+  capacity_ppm?: number | null;
+  is_emergency?: boolean;
+  metadata: Record<string, unknown>;
+}
+
+export interface ArchitecturalFacility {
+  id: string;
+  type: EntityType;
+  label: string;
+  level_id: string;
+  location: ArchitecturalLocation;
+  confidence: number;
+  source: EntitySource;
+  evidence: EvidenceItem[];
+  metadata: Record<string, unknown>;
+}
+
+export interface ArchitecturalLevel {
+  id: string;
+  name: string;
+  level_index: number;
+  elevation_m?: number | null;
+  floor_height_m?: number | null;
+  label?: string | null;
+  confidence: number;
+}
+
+export interface ArchitecturalRelationship {
+  source_id: string;
+  relation: string;
+  target_id: string;
+  confidence: number;
+}
+
+export interface VerticalConnection {
+  id: string;
+  type: EntityType;
+  label: string;
+  level_id: string;
+  from_level_id: string;
+  to_level_id: string;
+  location: ArchitecturalLocation;
+  confidence: number;
+  source: EntitySource;
+  evidence: EvidenceItem[];
+  metadata: Record<string, unknown>;
+}
+
+export interface ScaleEvidence {
+  meters_per_px: number;
+  confidence: number;
+  source: string;
+  note?: string | null;
+}
+
+export interface ArchitecturalUncertainty {
+  element_id?: string | null;
+  description: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface ArchitecturalVenue {
+  venue_type: string;
+  footprint_shape?: string | null;
+  center_normalized?: [number, number] | null;
+  orientation_deg?: number | null;
+  field_type?: string | null;
+  confidence: number;
+}
+
+export interface ArchitecturalDocument {
+  type: string;
+  projection: string;
+  venue_type: string;
+  floor_or_level?: string | null;
+  orientation?: string | null;
+  image_quality: string;
+  confidence: number;
+}
+
+export interface ArchitecturalScene {
+  document: ArchitecturalDocument;
+  venue: ArchitecturalVenue;
+  levels: ArchitecturalLevel[];
+  regions: ArchitecturalRegion[];
+  openings: ArchitecturalOpening[];
+  facilities: ArchitecturalFacility[];
+  vertical_connections: VerticalConnection[];
+  relationships: ArchitecturalRelationship[];
+  scale: ScaleEvidence;
+  uncertainties: ArchitecturalUncertainty[];
+  confidence: number;
+}
+
+export interface ReconstructionQuality {
+  passed: boolean;
+  reasons: string[];
+  document_confidence: number;
+  geometry_confidence: number;
+  semantic_confidence: number;
+  seating_confidence: number;
+  level_confidence: number;
+  gate_confidence: number;
+  navigation_confidence: number;
+  overall_confidence: number;
+  scale_confidence?: number;
+  warnings: string[];
+  procedural_completion_count: number;
+  blueprint_derived_count: number;
+}
+
+export interface StadiumProfile {
+  venue_id: string;
+  stadium_type: string;
+  structural_style: string;
+  roof_strategy: string;
+  footprint_shape: string;
+  footprint_width_m: number;
+  footprint_depth_m: number;
+  field_width_m: number;
+  field_depth_m: number;
+  seating_bowl_count: number;
+  concourse_count: number;
+  gate_count: number;
+  level_ids: string[];
+}
+
+// --------------------------------------------------------------------------- //
+//  Venue Digital Twin (canonical semantic model) — mirrors backend models.py
+//  The twin is a validated, editable, renderer-agnostic semantic model. The
+//  3D scene is always a *projection* of this model; geometry is produced by
+//  deterministic generators, never by per-object AI mesh code.
+// --------------------------------------------------------------------------- //
+export type TwinSeverity = 'ERROR' | 'WARNING' | 'INFERENCE';
+
+export interface TwinValidationIssue {
+  id: string;
+  severity: TwinSeverity;
+  scope: string;
+  message: string;
+  element_ids: string[];
+}
+
+export interface TwinNavigationNode {
+  id: string;
+  type: NodeType;
+  position: Point2D;
+  level_id: string;
+  capacity: number;
+  confidence: number;
+  spatial_ref?: string | null;
+}
+
+export interface TwinNavigationEdge {
+  id: string;
+  source: string;
+  destination: string;
+  length_m: number;
+  width_m: number;
+  capacity_ppm: number;
+  level_change: number;
+  is_emergency: boolean;
+  geometry_id?: string | null;
+}
+
+export interface TwinNavigationGraph {
+  nodes: TwinNavigationNode[];
+  edges: TwinNavigationEdge[];
+}
+
+export interface TwinCoordinateSystem {
+  name: string;
+  units: string;
+  origin: Point2D;
+  north_deg: number;
+  scale_estimated: boolean;
+  source?: string | null;
+}
+
+export interface TwinDimensions {
+  width_m: number;
+  height_m: number;
+}
+
+export interface TwinLevel {
+  id: string;
+  name: string;
+  index: number;
+  elevation_m: number;
+  height_m: number;
+}
+
+export interface TwinStructure {
+  id: string;
+  type: StructureType;
+  level_id: string;
+  polygon: Polygon2D;
+  height_m: number;
+  confidence: number;
+  source: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface TwinOpening {
+  id: string;
+  type: OpeningType;
+  level_id: string;
+  position: Point2D;
+  width_m: number;
+  rotation_deg: number;
+  capacity_ppm: number;
+  is_emergency: boolean;
+  confidence: number;
+  source: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface TwinPath {
+  id: string;
+  level_id: string;
+  centerline: Point2D[];
+  width_m: number;
+  confidence: number;
+  source: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface TwinRoad {
+  id: string;
+  kind: string;
+  name?: string | null;
+  lanes: number;
+  width_m: number;
+  capacity_veh_h: number;
+  points: Point2D[];
+}
+
+export interface TwinSite {
+  roads: TwinRoad[];
+  notes: string[];
+}
+
+export interface TwinSourceReference {
+  element_id: string;
+  kind: string;
+  source_bbox?: number[] | null;
+  note?: string | null;
+}
+
+export interface VenueDigitalTwin {
+  venue_id: string;
+  name: string;
+  coordinate_system: TwinCoordinateSystem;
+  dimensions: TwinDimensions;
+  levels: TwinLevel[];
+  structures: TwinStructure[];
+  openings: TwinOpening[];
+  paths: TwinPath[];
+  navigation: TwinNavigationGraph;
+  site: TwinSite;
+  validation: TwinValidationIssue[];
+  confidence: number;
+  metadata: Record<string, unknown>;
+  source_references: TwinSourceReference[];
 }

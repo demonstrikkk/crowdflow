@@ -1,4 +1,4 @@
-import { Crosshair, Eye, FolderKanban, GitCompareArrows, Map as MapIcon, Settings, Zap } from 'lucide-react';
+import { Boxes, Crosshair, Eye, FolderKanban, GitCompareArrows, Map as MapIcon, Settings, Zap } from 'lucide-react';
 import type { Mode, WorkspaceView } from '../../lib/selection';
 
 function modes(): { id: Mode; label: string; hint: string; Icon: typeof Eye }[] {
@@ -43,6 +43,15 @@ export default function Rail({
             <m.Icon className="h-4 w-4 shrink-0" />
           </button>
         ))}
+
+        <button
+          onClick={() => onView('twin3d')}
+          aria-label="3D Twin"
+          className={`rail-btn rail-icon w-full ${view === 'twin3d' ? 'is-active' : ''}`}
+          title="3D venue twin — interactive spatial model"
+        >
+          <Boxes className="h-4 w-4 shrink-0" />
+        </button>
 
         <div className="px-2 pb-1 pt-4 text-center text-[9px] uppercase tracking-[0.18em] text-od-muted" title="Configure">
           —·—

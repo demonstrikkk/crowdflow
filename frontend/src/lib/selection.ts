@@ -2,7 +2,7 @@ import type { NodeModel, VenueModel } from './types';
 
 export type Mode = 'simulate' | 'investigate' | 'intervene' | 'compare';
 
-export type WorkspaceView = Mode | 'scenarios' | 'venues' | 'settings';
+export type WorkspaceView = Mode | 'scenarios' | 'venues' | 'settings' | 'twin3d' | 'blueprint';
 
 export type Selection =
   | { kind: 'edge'; id: string }

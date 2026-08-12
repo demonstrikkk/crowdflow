@@ -1,6 +1,8 @@
 # ---- Python / backend ----
 backend/venv/
 venv/
+.venv/
+backend/.venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -16,6 +18,8 @@ node_modules/
 frontend/dist/
 dist/
 *.tsbuildinfo
+memory
+
 
 # ---- Env / secrets ----
 .env
@@ -30,6 +34,10 @@ backend/data/*.db-journal
 *.sqlite
 preview.log
 *.log
+
+# ---- Downloaded ML model weights (reproducible via HF) ----
+backend/models/
+backend/benchmark/cache/
 
 # ---- Editor / OS ----
 .vscode/

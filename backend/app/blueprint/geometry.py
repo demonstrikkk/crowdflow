@@ -214,7 +214,8 @@ def opencv_geometry(image) -> Optional[GeometryResult]:
     ]
     interior_walls: List[Tuple[Tuple[int, int], Tuple[int, int]]] = []
     if lines is not None:
-        for xa, ya, xb, yb in lines[:, 0]:
+        # numpy>=2.0 returns a 2-D (N,4) array; earlier versions (N,1,4)
+        for xa, ya, xb, yb in np.asarray(lines).reshape(-1, 4):
             # keep axis-dominant long lines strictly inside the footprint
             if min(xa, xb) < x0 + 6 or max(xa, xb) > x1 - 6:
                 continue

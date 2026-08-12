@@ -19,7 +19,9 @@ import type {
   ScenarioModel,
   SimulationState,
   VenueModel,
+  ViewMode,
 } from '../lib/types';
+
 
 export type GuidedStep = 'idle' | 'running' | 'bottleneck' | 'done';
 export type ThemeMode = 'light' | 'dark';
@@ -79,6 +81,11 @@ interface SimulationContextValue {
   refreshCatalog: () => Promise<void>;
   clearSimulation: () => void;
   clearError: () => void;
+
+  viewMode: ViewMode;
+  setViewMode: (m: ViewMode) => void;
+  selectedAgentId: number | null;
+  setSelectedAgentId: (id: number | null) => void;
 
   aiConfigured: boolean | null;
   aiProvider: string | null;
@@ -156,6 +163,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [cfWsConnected, setCfWsConnected] = useState(false);
   const [cfError, setCfError] = useState<string | null>(null);
   const cfWsRef = useRef<WebSocket | null>(null);
+
+  // view mode & agent selection
+  const [viewMode, setViewMode] = useState<ViewMode>('command');
+  const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -466,24 +477,13 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setBuffer([]);
       lastBufferedMin.current = null;
       try {
-        await api.resetSimulation(simId);
+        const nextState = await api.scrubSimulation(simId, minute);
+        setSim(nextState);
       } catch (e) {
-        fail(e, 'Rewind failed');
+        fail(e, 'Scrub failed');
+      } finally {
         setSeeking(false);
-        return;
       }
-      const ticksPerMin = Math.round(60 / 4);
-      let remaining = Math.max(0, Math.round(minute * ticksPerMin));
-      while (remaining > 0) {
-        const block = Math.min(600, remaining);
-        try {
-          await api.stepSimulation(simId, block);
-        } catch {
-          break;
-        }
-        remaining -= block;
-      }
-      setSeeking(false);
     },
     [simId, fail],
   );
@@ -707,6 +707,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       refreshCatalog,
       clearSimulation,
       clearError,
+      viewMode,
+      setViewMode,
+      selectedAgentId,
+      setSelectedAgentId,
       aiConfigured,
       aiProvider,
       aiBusy,
@@ -727,6 +731,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       jumpToMinute, optimize, applyIntervention, refreshCatalog, clearSimulation, clearError,
       aiConfigured, aiProvider, aiBusy, aiIdeas, aiExplanation, aiError, checkAiStatus,
       runAiSimulation, generateAiIdeas, explainCurrent,
+      viewMode, setViewMode, selectedAgentId, setSelectedAgentId,
     ],
   );
 
