@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import * as React from 'react';
 import { api, wsUrl } from '../lib/api';
 import type {
   AiExplainResponse,
@@ -25,6 +26,7 @@ import type {
 
 export type GuidedStep = 'idle' | 'running' | 'bottleneck' | 'done';
 export type ThemeMode = 'light' | 'dark';
+export type CompareViewMode = 'baseline' | 'counterfactual' | 'delta';
 
 export interface PlaybackFrame extends SimFrame {
   t: number;
@@ -86,6 +88,11 @@ interface SimulationContextValue {
   setViewMode: (m: ViewMode) => void;
   selectedAgentId: number | null;
   setSelectedAgentId: (id: number | null) => void;
+
+  simRef: React.RefObject<SimulationState | null>;
+  cfSimRef: React.RefObject<SimulationState | null>;
+  compareViewMode: CompareViewMode;
+  setCompareViewMode: (m: CompareViewMode) => void;
 
   aiConfigured: boolean | null;
   aiProvider: string | null;
@@ -169,6 +176,17 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [selectedAgentId, setSelectedAgentId] = useState<number | null>(null);
 
   const wsRef = useRef<WebSocket | null>(null);
+
+  // simRef / cfSimRef — updated on every WS frame for rAF consumers
+  const simRef = useRef<SimulationState | null>(null);
+  const cfSimRef = useRef<SimulationState | null>(null);
+
+  // 100 ms throttle: only call setSim at most 10× per second
+  const lastReactUpdateMs = useRef<number>(0);
+  const lastCfReactUpdateMs = useRef<number>(0);
+
+  // compare view mode
+  const [compareViewMode, setCompareViewMode] = useState<CompareViewMode>('counterfactual');
 
   useEffect(() => {
     applyTheme(theme);
@@ -295,17 +313,26 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       try {
         const state = JSON.parse(event.data as string) as SimulationState;
         if (!state || state.sim_id !== simId) return;
-        setSim(state);
 
-        // record playback frame when live is advancing
-        const t = state.t_min;
-        const last = lastBufferedMin.current;
-        if (last == null || t - last >= MIN_FRAME_STEP_MIN) {
-          lastBufferedMin.current = t;
-          setBuffer((prev) => {
-            const next = [...prev, compactFrame(state)];
-            return next.length > MAX_FRAMES ? next.slice(next.length - MAX_FRAMES) : next;
-          });
+        // Update ref immediately on every frame (for rAF loop — no React overhead)
+        simRef.current = state;
+
+        // Throttle React state updates to max 10fps (100 ms between renders)
+        const now = performance.now();
+        if (now - lastReactUpdateMs.current >= 100) {
+          lastReactUpdateMs.current = now;
+          setSim(state);
+
+          // record playback frame when live is advancing
+          const t = state.t_min;
+          const last = lastBufferedMin.current;
+          if (last == null || t - last >= MIN_FRAME_STEP_MIN) {
+            lastBufferedMin.current = t;
+            setBuffer((prev) => {
+              const next = [...prev, compactFrame(state)];
+              return next.length > MAX_FRAMES ? next.slice(next.length - MAX_FRAMES) : next;
+            });
+          }
         }
       } catch {
         /* ignore malformed frame */
@@ -342,7 +369,17 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       if (disposed) return;
       try {
         const state = JSON.parse(event.data as string) as SimulationState;
-        if (state && state.sim_id === cfSimId) setCfSim(state);
+        if (state && state.sim_id === cfSimId) {
+          // Update ref immediately on every frame (for rAF loop)
+          cfSimRef.current = state;
+
+          // Throttle React state updates to max 10fps (100 ms between renders)
+          const now = performance.now();
+          if (now - lastCfReactUpdateMs.current >= 100) {
+            lastCfReactUpdateMs.current = now;
+            setCfSim(state);
+          }
+        }
       } catch {
         /* ignore malformed frame */
       }
@@ -711,6 +748,10 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       setViewMode,
       selectedAgentId,
       setSelectedAgentId,
+      simRef,
+      cfSimRef,
+      compareViewMode,
+      setCompareViewMode,
       aiConfigured,
       aiProvider,
       aiBusy,
@@ -732,6 +773,7 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       aiConfigured, aiProvider, aiBusy, aiIdeas, aiExplanation, aiError, checkAiStatus,
       runAiSimulation, generateAiIdeas, explainCurrent,
       viewMode, setViewMode, selectedAgentId, setSelectedAgentId,
+      simRef, cfSimRef, compareViewMode, setCompareViewMode,
     ],
   );
 

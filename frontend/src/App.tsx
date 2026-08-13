@@ -8,6 +8,7 @@ import ScenarioBuilderView from './views/ScenarioBuilderView';
 import CreateTwinView from './views/CreateTwinView';
 import BlueprintReviewView from './views/BlueprintReviewView';
 import { SimulationProvider, useSimulation } from './store/SimulationContext';
+import { AutoLoadBridge } from './components/workspace/AutoLoadBridge';
 import type { Mode, WorkspaceView } from './lib/selection';
 import './App.css';
 
@@ -166,6 +167,7 @@ function Shell() {
 export default function App() {
   return (
     <SimulationProvider>
+      <AutoLoadBridge />
       <Shell />
     </SimulationProvider>
   );

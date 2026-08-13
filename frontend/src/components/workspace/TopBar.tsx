@@ -1,7 +1,6 @@
 import type { ScenarioModel, SimulationState, VenueModel } from '../../lib/types';
 import type { Mode } from '../../lib/selection';
 import { Pause, Play } from 'lucide-react';
-import CommandBar from './CommandBar';
 
 const MODE_TITLE: Record<Mode, string> = {
   simulate: 'OBSERVE',
@@ -103,8 +102,6 @@ export default function TopBar({
 
       {sim && <WeatherChip sim={sim} />}
       {sim && <IncidentChip sim={sim} />}
-
-      <CommandBar />
 
       <span
         className={`status-dot ${wsConnected ? 'is-ok' : 'is-scan'}`}

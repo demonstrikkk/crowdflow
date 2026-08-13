@@ -1,9 +1,14 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Boxes, PanelsTopLeft, RefreshCw } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { ExternalEnvironment, SimulationState, VenueModel } from '../../lib/types';
 import { elementColor } from '../../lib/format';
 import { edgeKey, positionsOf, type Mode, type Selection } from '../../lib/selection';
 import type { GuidedStep } from '../../store/SimulationContext';
+import { InstrumentCanvasAgents } from './InstrumentCanvasAgents';
+import { DensityGridLayer } from './DensityGridLayer';
+import { FlowArrowLayer } from './FlowArrowLayer';
+import { BottleneckPulseLayer } from './BottleneckPulseLayer';
 
 export interface RedirectDraft {
   from: string;
@@ -41,6 +46,10 @@ export interface CanvasProps {
   onScope?: (s: CanvasScope) => void;
   onRefreshEnvironment?: () => void;
   onSpatialAction?: (action: SpatialAction) => void;
+  /** simRef from SimulationContext for rAF-based Canvas2D agent rendering */
+  simRef?: React.RefObject<SimulationState | null>;
+  /** viewMode for density/crowd heatmap visibility */
+  viewMode?: string;
 }
 
 const NODE_KIND: Record<string, string> = {
@@ -93,12 +102,16 @@ export default function InstrumentCanvas({
   onScope,
   onRefreshEnvironment,
   onSpatialAction,
+  simRef,
+  viewMode = 'command',
 }: CanvasProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const [hover, setHover] = useState<Selection | null>(null);
   const [iso, setIso] = useState(false);
   const [ring, setRing] = useState<{ x: number; y: number } | null>(null);
+  // Canvas 2D fallback flag (Req 19)
+  const [canvasSupported, setCanvasSupported] = useState(true);
 
   const W = venue?.width ?? 1000;
   const H = venue?.height ?? 620;
@@ -501,14 +514,51 @@ export default function InstrumentCanvas({
           )}
 
           {/* edges */}
-          {drawnEdges.map((ed) =>
-            ed ? (
+          {drawnEdges.map((ed) => {
+            if (!ed) return null;
+
+            // Active REDIRECT intervention on this edge (Req 6 / Task 10)
+            const isRedirectActive = !!(sim?.interventions_applied.some(
+              (i) =>
+                i.type === 'REDIRECT' &&
+                ((i.parameters.from === ed.e.source && i.parameters.to === ed.e.destination) ||
+                  (i.parameters.edge_id === ed.key) ||
+                  (i.parameters.from === ed.e.source)),
+            ));
+
+            // Newly-opened OPEN_CORRIDOR on this edge — framer-motion entrance (Req 6 / Task 10)
+            const isOpenCorridor = !!(
+              ed.e.is_open &&
+              sim?.interventions_applied.some(
+                (i) =>
+                  i.type === 'OPEN_CORRIDOR' &&
+                  ((i.parameters.edge_id === ed.key) ||
+                    (i.parameters.from === ed.e.source && i.parameters.to === ed.e.destination)),
+              )
+            );
+
+            const lineEl = (
+              <line
+                x1={ed.s.x} y1={ed.s.y} x2={ed.d.x} y2={ed.d.y}
+                stroke={ed.stroke} strokeWidth={ed.width} opacity={ed.opacity}
+                strokeDasharray={ed.dash}
+                className={isRedirectActive ? 'od-redirect-active' : undefined}
+              />
+            );
+
+            return (
               <g key={ed.key}>
-                <line
-                  x1={ed.s.x} y1={ed.s.y} x2={ed.d.x} y2={ed.d.y}
-                  stroke={ed.stroke} strokeWidth={ed.width} opacity={ed.opacity}
-                  strokeDasharray={ed.dash}
-                />
+                {isOpenCorridor ? (
+                  <motion.g
+                    initial={{ opacity: 0, scale: 0.6 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    style={{ transformOrigin: `${ed.mid.x}px ${ed.mid.y}px` }}
+                  >
+                    {lineEl}
+                  </motion.g>
+                ) : (
+                  lineEl
+                )}
                 {ed.closedDraft && (
                   <g>
                     <text x={ed.mid.x} y={ed.mid.y - nodeR * 0.7} textAnchor="middle" fontSize={Math.max(7, m / 58)} fill="var(--od-danger)" fontWeight={800} letterSpacing="0.08em">
@@ -525,8 +575,8 @@ export default function InstrumentCanvas({
                   </g>
                 )}
               </g>
-            ) : null,
-          )}
+            );
+          })}
 
           {/* redirect draft */}
           {drafts?.redirect && (() => {
@@ -635,8 +685,9 @@ export default function InstrumentCanvas({
             );
           })}
 
-          {/* agents */}
-          {showAgents &&
+          {/* agents — SVG fallback only when Canvas 2D is unavailable (Req 19) */}
+          {!canvasSupported &&
+            showAgents &&
             sim &&
             sim.agents.map((a) => {
               const r = a.is_rerouted ? Math.max(1.6, nodeR * 0.24) : Math.max(1.4, nodeR * 0.2);
@@ -716,6 +767,45 @@ export default function InstrumentCanvas({
           </g>
         )}
       </svg>
+
+      {/* ---- Canvas / SVG overlay layers (Z-1 … Z-4) ---- */}
+
+      {/* Z-1: Density heatmap — visible when viewMode === 'density' | 'crowd' */}
+      <DensityGridLayer
+        agents={sim?.agents ?? null}
+        venue={venue}
+        visible={viewMode === 'density' || viewMode === 'crowd'}
+      />
+
+      {/* Z-2: Canvas 2D agent layer — skipped when Canvas 2D is unavailable (SVG fallback above) */}
+      {canvasSupported && simRef && (
+        <InstrumentCanvasAgents
+          simRef={simRef}
+          venue={venue}
+          showAgents={showAgents}
+          viewBoxX={0}
+          viewBoxY={0}
+          viewBoxW={W}
+          viewBoxH={H}
+          onCanvasUnsupported={() => setCanvasSupported(false)}
+        />
+      )}
+
+      {/* Z-3: Flow direction arrows */}
+      <FlowArrowLayer
+        sim={sim}
+        venue={venue}
+        nodePositions={pos}
+        viewBox={activeViewBox}
+      />
+
+      {/* Z-4: Bottleneck pulse rings */}
+      <BottleneckPulseLayer
+        bottlenecks={sim?.bottlenecks ?? []}
+        venue={venue}
+        nodePositions={pos}
+        viewBox={activeViewBox}
+      />
 
       {/* spatial action ring — the world is the interface */}
       {mode === 'intervene' && interactive && selected && ring && (() => {

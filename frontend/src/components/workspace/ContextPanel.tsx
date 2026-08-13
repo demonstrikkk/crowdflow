@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
 import type { ElementState, Intervention, SimulationState, VenueModel, ViewMode } from '../../lib/types';
 import { riskState } from '../../lib/format';
@@ -6,6 +7,8 @@ import type { Mode, Selection } from '../../lib/selection';
 import type { DraftState, RedirectDraft } from './InstrumentCanvas';
 import { WeatherPanel } from './WeatherPanel';
 import { CausalGraphPanel } from './CausalGraphPanel';
+import { BottleneckInvestigationPanel } from './BottleneckInvestigationPanel';
+import { useSimulation } from '../../store/SimulationContext';
 
 export interface PanelProps {
   mode: Mode;
@@ -463,16 +466,52 @@ function ConditionsComposer({
   );
 }
 
-function CompareReadout({ sim, cfSim, cfError }: { sim: SimulationState | null; cfSim: SimulationState | null; cfError: string | null }) {
+// ---------------------------------------------------------------------------
+// CompareReadout — 8 animated metric rows + AI verdict card
+// ---------------------------------------------------------------------------
+
+interface CompareReadoutProps {
+  sim: SimulationState | null;
+  cfSim: SimulationState | null;
+  cfError: string | null;
+  cfSimId: string | null;
+  onApplyCf: () => void;
+  onDiscardCf: () => void;
+}
+
+function CompareReadout({ sim, cfSim, cfError, cfSimId, onApplyCf, onDiscardCf }: CompareReadoutProps) {
+  const [verdictBusy, setVerdictBusy] = useState(false);
+  const [verdict, setVerdict] = useState<{ summary: string; cause: string } | null>(null);
+
   const base = sim?.metrics;
   const alt = cfSim?.metrics;
-  const rows: [string, string | number | null, string | number | null, (a: number, b: number) => boolean][] = [
-    ['In venue', base?.in_venue ?? null, alt?.in_venue ?? null, (a, b) => a <= b],
-    ['Avg travel', base?.avg_travel_time_min ?? null, alt?.avg_travel_time_min ?? null, (a, b) => a <= b],
-    ['Max utilisation', base?.max_utilisation ?? null, alt?.max_utilisation ?? null, (a, b) => a <= b],
-    ['Queue total', base?.queue_total ?? null, alt?.queue_total ?? null, (a, b) => a <= b],
-    ['Bottlenecks', base?.bottleneck_count ?? null, alt?.bottleneck_count ?? null, (a, b) => a <= b],
+
+  const rows: { label: string; key: keyof typeof base; betterWhenLower: boolean }[] = [
+    { label: 'In venue',    key: 'in_venue',             betterWhenLower: true },
+    { label: 'Avg travel',  key: 'avg_travel_time_min',  betterWhenLower: true },
+    { label: 'Max util',    key: 'max_utilisation',      betterWhenLower: true },
+    { label: 'Queue total', key: 'queue_total',          betterWhenLower: true },
+    { label: 'Bottlenecks', key: 'bottleneck_count',     betterWhenLower: true },
+    { label: 'Clearance',   key: 'clearance_time_min',   betterWhenLower: true },
+    { label: 'Avg stress',  key: 'avg_stress',           betterWhenLower: true },
+    { label: 'Flow/min',    key: 'flow_per_min',         betterWhenLower: false },
   ];
+
+  const handleAiVerdict = async () => {
+    if (!cfSimId) return;
+    setVerdictBusy(true);
+    setVerdict(null);
+    try {
+      const { api } = await import('../../lib/api');
+      const res = await api.aiExplain(cfSimId);
+      setVerdict({ summary: res.summary, cause: res.cause });
+    } catch {
+      setVerdict({ summary: 'Unable to get AI verdict.', cause: '' });
+    } finally {
+      setVerdictBusy(false);
+    }
+  };
+
   return (
     <Section n="01" title="Comparison">
       {cfError && <p className="text-[11px] text-od-danger">{cfError}</p>}
@@ -488,29 +527,77 @@ function CompareReadout({ sim, cfSim, cfError }: { sim: SimulationState | null; 
             <span className="meta text-right">Base</span>
             <span className="meta text-right">Alt</span>
             <span className="meta text-right">Δ</span>
-            {rows.map(([label, a, b, better]) => {
-              const an = typeof a === 'number' ? a : null;
-              const bn = typeof b === 'number' ? b : null;
+            {rows.map(({ label, key, betterWhenLower }, rowIndex) => {
+              const an = base != null ? (base[key] as number | null | undefined) ?? null : null;
+              const bn = alt != null ? (alt[key] as number | null | undefined) ?? null : null;
               const delta = an != null && bn != null ? bn - an : null;
-              const good = delta != null && an != null && bn != null ? better(an, bn) : true;
+              // negative delta = decreased = good when betterWhenLower; vice versa
+              const isGood = delta == null
+                ? true
+                : betterWhenLower
+                  ? delta <= 0
+                  : delta >= 0;
+              const deltaClass = delta == null
+                ? ''
+                : isGood
+                  ? 'text-od-ok'
+                  : 'text-od-danger';
+
               return (
                 <div key={label} className="contents">
                   <span className="text-od-muted pt-0.5">{label}</span>
                   <span className="num text-right text-od-ink">{fmt(an, 1)}</span>
                   <span className="num text-right text-od-ink">{fmt(bn, 1)}</span>
-                  <span className={`num text-right ${delta == null ? '' : good ? 'text-od-ok' : 'text-od-danger'}`}>
+                  <motion.span
+                    className={`num text-right ${deltaClass}`}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: rowIndex * 0.05 }}
+                  >
                     {delta == null ? '—' : `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`}
-                  </span>
+                  </motion.span>
                 </div>
               );
             })}
           </div>
-          <div className="mt-2 border-t border-od-line pt-2">
-            <div className="meta mb-1">Clearance time</div>
-            <div className="num text-od-ink">
-              {fmt(base?.clearance_time_min, 1)}m <span className="text-od-muted">→</span> {fmt(alt?.clearance_time_min, 1)}m
+
+          {/* AI verdict section */}
+          <button
+            className="btn btn-solid w-full mt-3"
+            onClick={handleAiVerdict}
+            disabled={!cfSimId || verdictBusy}
+          >
+            🧠 Ask: Did this improve the situation?
+          </button>
+
+          {verdictBusy && <div className="shimmer-line h-3 w-full mt-2" />}
+
+          {verdict && (
+            <div className="mt-2 border border-od-warn px-2.5 py-2 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[9px] uppercase tracking-[0.18em] text-od-warn font-bold">
+                  AI Verdict
+                </span>
+              </div>
+              {verdict.summary && (
+                <p className="text-[11px] leading-snug text-od-ink">{verdict.summary}</p>
+              )}
+              {verdict.cause && (
+                <p className="text-[10px] leading-snug text-od-muted">
+                  <span className="font-semibold">Cause: </span>
+                  {verdict.cause}
+                </p>
+              )}
+              <div className="flex gap-1.5 pt-1">
+                <button className="btn btn-solid flex-1" onClick={onApplyCf}>
+                  APPLY INTERVENTION
+                </button>
+                <button className="btn btn-ghost" onClick={onDiscardCf}>
+                  DISCARD
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       )}
     </Section>
@@ -518,7 +605,26 @@ function CompareReadout({ sim, cfSim, cfError }: { sim: SimulationState | null; 
 }
 
 export default function ContextPanel(props: PanelProps) {
-  const { mode, sim, selected, onSelect, guidedCta, viewMode } = props;
+  const { mode, sim, venue, selected, onSelect, guidedCta, viewMode } = props;
+  const s = useSimulation();
+
+  const isBottleneckSelected = !!(
+    selected &&
+    sim?.bottlenecks.some((b) => b.location === selected.id)
+  );
+
+  // Derived props for BottleneckInvestigationPanel
+  const bottleneck = isBottleneckSelected && sim && selected
+    ? sim.bottlenecks.find((b) => b.location === selected.id)
+    : undefined;
+  const elementState = isBottleneckSelected && sim && selected
+    ? (sim.edges[selected.id] ?? sim.nodes[selected.id])
+    : undefined;
+  const venueElement = isBottleneckSelected && venue && selected
+    ? (venue.edges.find((e) => `${e.source}→${e.destination}` === selected.id) ??
+       venue.nodes.find((n) => n.id === selected.id))
+    : undefined;
+
   return (
     <aside className="hidden w-80 shrink-0 flex-col border-l border-od-line bg-od-panel lg:flex">
       <div className="flex shrink-0 items-center justify-between border-b border-od-line px-3 py-2">
@@ -543,22 +649,44 @@ export default function ContextPanel(props: PanelProps) {
             <ConditionsComposer sim={sim} selected={selected} onIntervention={props.onIntervention} />
           </>
         ) : mode === 'compare' ? (
-          <CompareReadout sim={sim} cfSim={props.cfSim} cfError={props.cfError} />
+          <CompareReadout
+            sim={sim}
+            cfSim={props.cfSim}
+            cfError={props.cfError}
+            cfSimId={s.cfSimId}
+            onApplyCf={props.onApplyCf}
+            onDiscardCf={props.onDiscardCf}
+          />
         ) : mode === 'investigate' ? (
           <>
             {sim?.weather && viewMode === 'weather' && (
-              <WeatherPanel weather={sim.weather as any} metrics={sim.metrics} />
+              <WeatherPanel weather={sim.weather as never} metrics={sim.metrics} />
             )}
             <BottleneckRegister sim={sim} onSelect={onSelect} />
             {sim?.causal_graph && viewMode !== 'infrastructure' && (
               <CausalGraphPanel graph={sim.causal_graph} />
             )}
-            {selected && <ObjectDetail sim={sim} venue={props.venue} selected={selected} />}
+            {selected && isBottleneckSelected && bottleneck && elementState && venueElement && sim && venue ? (
+              <BottleneckInvestigationPanel
+                bottleneck={bottleneck}
+                elementState={elementState}
+                venueElement={venueElement}
+                sim={sim}
+                venue={venue}
+                onDraftIntervention={(i) => props.onIntervention(i)}
+                onExplainAi={() => s.explainCurrent()}
+                aiExplanation={s.aiExplanation}
+                aiBusy={s.aiBusy}
+                aiConfigured={s.aiConfigured}
+              />
+            ) : (
+              selected && <ObjectDetail sim={sim} venue={venue} selected={selected} />
+            )}
           </>
         ) : (
           <>
             {sim?.weather && viewMode === 'weather' && (
-              <WeatherPanel weather={sim.weather as any} metrics={sim.metrics} />
+              <WeatherPanel weather={sim.weather as never} metrics={sim.metrics} />
             )}
             {guidedCta && (
               <button
@@ -575,7 +703,22 @@ export default function ContextPanel(props: PanelProps) {
             {sim?.causal_graph && viewMode !== 'infrastructure' && (
               <CausalGraphPanel graph={sim.causal_graph} />
             )}
-            {selected && <ObjectDetail sim={sim} venue={props.venue} selected={selected} />}
+            {selected && isBottleneckSelected && bottleneck && elementState && venueElement && sim && venue ? (
+              <BottleneckInvestigationPanel
+                bottleneck={bottleneck}
+                elementState={elementState}
+                venueElement={venueElement}
+                sim={sim}
+                venue={venue}
+                onDraftIntervention={(i) => props.onIntervention(i)}
+                onExplainAi={() => s.explainCurrent()}
+                aiExplanation={s.aiExplanation}
+                aiBusy={s.aiBusy}
+                aiConfigured={s.aiConfigured}
+              />
+            ) : (
+              selected && <ObjectDetail sim={sim} venue={venue} selected={selected} />
+            )}
           </>
         )}
       </div>

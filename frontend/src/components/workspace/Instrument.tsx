@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft } from 'lucide-react';
 import { useSimulation } from '../../store/SimulationContext';
+import type { CompareViewMode } from '../../store/SimulationContext';
 import type { Mode, Selection, WorkspaceView } from '../../lib/selection';
 import { edgeKey as edgeKeyOf } from '../../lib/selection';
 import type { ExternalEnvironment, Intervention } from '../../lib/types';
 import { api } from '../../lib/api';
 import InstrumentCanvas, { type CanvasScope, type DraftState, type SpatialAction } from './InstrumentCanvas';
+import DeltaInstrumentCanvas from './DeltaInstrumentCanvas';
+import CommandBarBanner from './CommandBarBanner';
 import TopBar from './TopBar';
 import ContextPanel from './ContextPanel';
 import Timeline from './Timeline';
@@ -229,6 +232,8 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
       onScope={interactive ? setScope : undefined}
       onRefreshEnvironment={interactive ? refreshEnvironment : undefined}
       onSpatialAction={interactive && mode === 'intervene' ? onSpatialAction : undefined}
+      simRef={s.simRef}
+      viewMode={s.viewMode}
     />
   );
 
@@ -246,6 +251,8 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
         onPause={() => void s.pause()}
       />
 
+      <CommandBarBanner />
+
       <div className="flex min-h-0 flex-1">
         <ViewRail viewMode={s.viewMode} onChange={s.setViewMode} />
         <div className="relative min-w-0 flex-1">
@@ -253,27 +260,38 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
             <HumanBehaviourOverlay field={behaviourField} onFieldChange={setBehaviourField} />
           )}
 
-          {mode === 'compare' ? (
-            <div className="absolute inset-0 grid grid-cols-2 divide-x divide-od-line">
-              <div className="relative min-w-0">
-                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 border border-od-line bg-od-panel px-2 py-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-od-soft" />
-                  <span className="sec-label">Baseline</span>
-                </div>
-                <div className="absolute inset-0">
+          {mode === 'compare' && s.cfSim !== null ? (
+            <div className="absolute inset-0 flex flex-col">
+              {/* Toggle strip */}
+              <div className="flex shrink-0 items-center gap-1.5 border-b border-od-line bg-od-panel px-3 py-1.5">
+                {(['baseline', 'counterfactual', 'delta'] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => s.setCompareViewMode(m)}
+                    className={`chip ${s.compareViewMode === m ? 'is-active' : ''}`}
+                  >
+                    {m.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              {/* Split canvas area */}
+              <div className="flex min-h-0 flex-1 divide-x divide-od-line">
+                {/* Left pane: always baseline */}
+                <div className="relative min-w-0 flex-1">
                   <InstrumentCanvas sim={s.displayedSim} venue={s.venue} mode="compare" selected={null} interactive={false} showAgents showLabels environment={env} scope={scope} />
                 </div>
-              </div>
-              <div className="relative min-w-0">
-                <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 border border-od-warn bg-od-panel px-2 py-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-od-warn" />
-                  <span className="sec-label">Counterfactual</span>
-                </div>
-                <div className="absolute inset-0">
-                  <InstrumentCanvas sim={s.cfSim} venue={s.venue} mode="compare" selected={null} interactive={false} showAgents showLabels environment={env} scope={scope} />
+                {/* Right pane: counterfactual OR delta */}
+                <div className="relative min-w-0 flex-1">
+                  {s.compareViewMode === 'delta' && s.cfSim && s.venue ? (
+                    <DeltaInstrumentCanvas baseSim={s.displayedSim!} cfSim={s.cfSim} venue={s.venue} />
+                  ) : (
+                    <InstrumentCanvas sim={s.cfSim} venue={s.venue} mode="compare" selected={null} interactive={false} showAgents showLabels environment={env} scope={scope} />
+                  )}
                 </div>
               </div>
             </div>
+          ) : mode === 'compare' ? (
+            <div className="absolute inset-0">{singleCanvas(false, false)}</div>
           ) : (
             <div className="absolute inset-0">{singleCanvas(true, mode === 'intervene')}</div>
           )}
@@ -308,10 +326,31 @@ export default function Instrument({ mode, onMode }: { mode: Mode; onMode: (m: W
             </button>
           )}
 
-          {!s.sim && !s.cfSimId && (
+          {s.venue !== null && s.sim === null && (
+            <div className="absolute inset-0 z-20" style={{ backdropFilter: 'blur(2px)', background: 'rgba(var(--od-canvas-rgb, 10 12 14), 0.55)' }}>
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center space-y-4 px-8">
+                  <div className="sec-label">{s.venue.name}</div>
+                  {s.scenario && <div className="text-od-muted text-[11px]">{s.scenario.name} · {s.scenario.crowd_size.toLocaleString()} crowd</div>}
+                  <button
+                    className="h-14 px-10 text-base font-bold btn btn-solid"
+                    onClick={() => void s.runSimulation()}
+                  >
+                    ▶ SIMULATE
+                  </button>
+                  {!s.scenario && (
+                    <div>
+                      <button className="btn btn-ghost" onClick={() => onMode('scenarios')}>Choose scenario</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          {!s.venue && (
             <div className="absolute inset-0 z-20">
               <EmptyState
-                venueName={s.venue?.name ?? null}
+                venueName={null}
                 onLoad={() => void s.runSimulation()}
                 onBuild={() => onMode('scenarios')}
                 onImport={() => onMode('venues')}

@@ -1,1 +1,70 @@
 
+/* =====================================================================
+   CrowdFlow – CSS Keyframe Animations
+   Task 4 – Req 5, Req 6, Req 13
+   ===================================================================== */
+
+/* ------------------------------------------------------------------
+   Bottleneck pulse rings (Req 5)
+   ------------------------------------------------------------------ */
+@keyframes bottleneck-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+.od-bottleneck-pulse {
+  animation: bottleneck-pulse 1.4s ease-out infinite;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+.od-bottleneck-pulse-delay {
+  animation: bottleneck-pulse 1.4s ease-out infinite;
+  animation-delay: 0.7s;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+
+/* ------------------------------------------------------------------
+   Redirect / active-flow dash animation (Req 6)
+   ------------------------------------------------------------------ */
+@keyframes flow-dash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.od-redirect-active {
+  stroke-dasharray: 8 4;
+  animation: flow-dash 0.6s linear infinite;
+}
+
+/* ------------------------------------------------------------------
+   AI loading shimmer (Req 13)
+   ------------------------------------------------------------------ */
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.shimmer-line {
+  background: linear-gradient(
+    90deg,
+    var(--od-line) 25%,
+    var(--od-surface) 50%,
+    var(--od-line) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s linear infinite;
+  border-radius: 4px;
+}
