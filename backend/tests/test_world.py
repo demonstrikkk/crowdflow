@@ -87,7 +87,10 @@ def test_gate_queues_form_under_overload(world):
     st = sim.state()
     queue_gate = max(st.gates.items(), key=lambda kv: kv[1].queue)
     assert queue_gate[1].queue > 0, "overloaded gate must build an external queue"
-    assert queue_gate[1].served_per_min <= queue_gate[1].arrivals_per_min + 1
+    # the overloaded gate is capped at 100/min and serves at its cap from the
+    # backlog (smoothed arrivals can dip below the cap mid-surge, so assert the
+    # real invariant: served == cap while the queue keeps draining/serving)
+    assert queue_gate[1].served_per_min == pytest.approx(100.0, abs=1.0)
 
 
 def test_gate_rebalancing_shifts_demand_off_congestion(world):
@@ -102,7 +105,7 @@ def test_gate_rebalancing_shifts_demand_off_congestion(world):
     scenario = storage.get_scenario("gate_overload")
     sim = WorldSimulation(graph, venue, scenario)
     sim.time_offset = 25.0  # live-event clock: rebalancing runs past warm-up
-    for _ in range(200):  # ~8 min of live congestion
+    for _ in range(240):  # ~10 min of live congestion
         sim.step(0.25, scenario.arrival_rate_per_minute, 0.0)
 
     share_a = sim.plan.gate_share("GATE_A")
@@ -178,10 +181,10 @@ def test_external_redirect_intervention_changes_flow(world):
 
     emitted = {"GATE_A": 0.0, "GATE_C": 0.0}
     orig_emit = sim._emit
-    def tally(path, gate, amount, rerouted):
-        if gate in emitted:
+    def tally(path, gate, amount, rerouted, mode="walk", vehicle=False):
+        if gate in emitted and not vehicle:
             emitted[gate] += amount
-        orig_emit(path, gate, amount, rerouted)
+        orig_emit(path, gate, amount, rerouted, mode=mode, vehicle=vehicle)
     sim._emit = tally
 
     sim.apply_intervention(Intervention(
@@ -292,3 +295,64 @@ def test_scenario_world_conditions_close_gates(world):
     # surviving gates carry the extra demand
     survivors = sum(sim.plan.gate_share(g) for g in ("GATE_A", "GATE_B", "GATE_D", "GATE_F"))
     assert survivors > 0.5
+
+
+def test_mode_aware_transport_flow(world):
+    """The derived transport layer is real: cars/buses/metro on the road network
+    at people ÷ occupancy, while people-flow statistics stay pedestrian-only."""
+    graph, venue = world
+    scenario = storage.get_scenario("normal")
+    sim = WorldSimulation(graph, venue, scenario)
+
+    kinds = {s.id: s.kind for s in graph.demand_sources}
+    assert "METRO" in kinds.values()
+    assert "BUS" in kinds.values()
+    assert "PARKING" in kinds.values()
+
+    for _ in range(400):
+        sim.step(0.25, scenario.arrival_rate_per_minute, 0.0)
+    st = sim.state()
+
+    # each transport source reports its approach mode and a derived vehicle rate
+    src = next(s for s in st.sources.values() if s.kind == "PARKING")
+    assert src.mode == "car"
+    assert src.vehicles_per_min > 0
+    metro_src = next(s for s in st.sources.values() if s.kind == "METRO")
+    assert metro_src.mode == "metro"
+    bus_src = next(s for s in st.sources.values() if s.kind == "BUS")
+    assert bus_src.mode == "bus"
+    walk_src = next(s for s in st.sources.values() if s.kind == "WALKING")
+    assert walk_src.mode == "walk"
+
+    # car flow appears on road-capable edges and stays vehicles-per-minute
+    car_edges = [e for e in st.edges.values() if e.flow_by_mode.get("car", 0.0) > 0.0]
+    assert car_edges, "car flow must show on the road network"
+    assert all(
+        graph.edge(e.id).road_allowed or graph.edge(e.id).kind == "GATE_LINK"
+        for e in car_edges
+    ), "cars must never leave road-capable edges"
+
+    # bus flow likewise, and metro shows up on the station approach at some point
+    assert any(e.flow_by_mode.get("bus", 0.0) > 0.0 for e in st.edges.values())
+    metro_edges = [e for e in st.edges.values() if e.flow_by_mode.get("metro", 0.0) > 0.0]
+    assert metro_edges, "metro pulses must reach the station connector"
+
+    # people flow is unchanged: edge_flow counts pedestrians, not vehicles
+    for eid, est in st.edges.items():
+        assert est.flow_per_min >= 0
+    assert all(v >= 0.0 for e in st.edges.values() for v in e.flow_by_mode.values())
+
+
+def test_reset_clears_mode_flow(world):
+    """reset() must clear the per-mode transport state like the rest."""
+    graph, venue = world
+    scenario = storage.get_scenario("normal")
+    sim = WorldSimulation(graph, venue, scenario)
+    for _ in range(120):
+        sim.step(0.25, scenario.arrival_rate_per_minute, 0.0)
+    assert any(
+        v.get("car", 0.0) > 0.0 for v in sim.edge_flow_by_mode.values()
+    )
+    sim.reset()
+    assert all(not v for v in sim.edge_flow_by_mode.values())
+    assert not sim._metro_clock

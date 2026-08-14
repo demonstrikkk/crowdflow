@@ -141,7 +141,7 @@ class DemoProvider(MapProvider):
                     kind="STREET",
                     length_m=round(length, 1),
                     walking_allowed=True,
-                    road_allowed=r.kind in ("ARTERIAL", "MAJOR", "RING"),
+                    road_allowed=r.kind in ("ARTERIAL", "MAJOR", "RING", "ACCESS"),
                     capacity_estimate=float(cap),
                     speed_mps=self._DEMO_SPEED_MPS,
                     free_flow_min=round(length / (self._DEMO_SPEED_MPS * 60.0), 3),
@@ -161,6 +161,9 @@ class DemoProvider(MapProvider):
                     "Not real-world geography.",
                     "Approach pace set to 1.8 m/s (purposeful arrival) so stadium "
                     "routes are ~5-15 min rather than 15-35 min.",
+                    "Metro/bus/car flow is a derived layer: vehicles are the "
+                    "demand plan's people count divided by occupancy, not live "
+                    "traffic data.",
                 ],
             ),
             bbox=_graph_bbox(venue, world_span_m(venue)),
@@ -192,6 +195,21 @@ class DemoProvider(MapProvider):
             graph.demand_sources.append(DemandSource(
                 id="DS_WALK_01", kind="WALKING", name="Walking catchment (drop-off)",
                 node_id=outer, position=nodes[outer].position, capacity=1000, share=0.2,
+                data_source="SIMULATED",
+            ))
+        # bus shuttle stop on the opposite side of the ring road, so the demo
+        # exercises the full transport mix (metro + bus + car + walk). Derived
+        # demand — SIMULATED provenance, never presented as live data.
+        outer_pts = [(nid, nodes[nid].position) for nid in nodes if nid.startswith("NODE_")]
+        if outer and len(outer_pts) > 1:
+            bus_node, bus_pos = max(
+                outer_pts,
+                key=lambda t: (t[1].x - nodes[outer].position.x) ** 2
+                + (t[1].y - nodes[outer].position.y) ** 2,
+            )
+            graph.demand_sources.append(DemandSource(
+                id="DS_BUS_01", kind="BUS", name="Bus shuttle stop (northeast)",
+                node_id=bus_node, position=bus_pos, capacity=800, share=0.15,
                 data_source="SIMULATED",
             ))
 

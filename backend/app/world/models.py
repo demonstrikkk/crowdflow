@@ -176,6 +176,10 @@ class WorldEdgeState(BaseModel):
     time_to_critical_min: Optional[float] = None
     closed: bool = False
     rerouted: bool = False
+    # Per-mode flow for truthful transport rendering: walk (people/min) plus
+    # car/bus/metro (vehicles/min). Derived from the demand plan — never a
+    # fabricated count.
+    flow_by_mode: Dict[str, float] = Field(default_factory=dict)
 
 
 class WorldGateState(BaseModel):
@@ -194,6 +198,11 @@ class WorldSourceState(BaseModel):
     kind: str = "WALKING"
     emitted_total: int = 0
     current_rate_per_min: float = 0.0
+    # Approach mode for this source: walk | car | bus | metro (drives the
+    # transport visualisation and which edges vehicles route over).
+    mode: str = "walk"
+    # Derived vehicle arrivals/min for transport sources (people ÷ occupancy).
+    vehicles_per_min: float = 0.0
 
 
 class WorldPrediction(BaseModel):

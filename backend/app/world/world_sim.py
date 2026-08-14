@@ -51,9 +51,34 @@ REBALANCE_TRIGGER_QUEUE_MIN = 2.0  # queue > 2 minutes of service triggers drift
 REBALANCE_CONGESTED_PCT = 8.0      # % of share moved per cycle when congested
 REBALANCE_CLOSED_PCT = 30.0        # % moved per cycle when the gate is closed
 
+# ── transport modes ────────────────────────────────────────────────────────
+# The world model is a people model; vehicles are a derived *rendering* layer.
+# A transport source's person flow still walks the last mile (parking → gate,
+# station → gate) exactly as before, while its approach mode emits vehicles at
+# people ÷ occupancy so the map shows genuine car/bus/metro streams that match
+# the real demand plan. Nothing fabricated.
+MODE_WALK = "walk"
+MODE_CAR = "car"
+MODE_BUS = "bus"
+MODE_METRO = "metro"
+
+# demand source kind → approach mode (None → pedestrians only)
+SOURCE_MODE = {
+    "METRO": MODE_METRO,
+    "BUS": MODE_BUS,
+    "PARKING": MODE_CAR,
+    "DROP_OFF": MODE_CAR,
+    "WALKING": None,
+    "GATHERING": None,
+}
+
+CAR_OCC = 2.2            # people per car (vehicle flow = people ÷ occupancy)
+BUS_OCC = 55.0           # people per bus
+METRO_HEADWAY_MIN = 8.0  # a metro service every ~8 minutes
+
 
 class _Packet:
-    __slots__ = ("amount", "path", "idx", "ready_t", "gate", "rerouted")
+    __slots__ = ("amount", "path", "idx", "ready_t", "gate", "rerouted", "mode", "vehicle")
 
     def __init__(self, amount: float, path: List[str], gate: Optional[str]):
         self.amount = amount
@@ -62,6 +87,8 @@ class _Packet:
         self.ready_t = float("inf")
         self.gate = gate
         self.rerouted = False
+        self.mode = MODE_WALK
+        self.vehicle = False
 
 
 class WorldSimulation:
@@ -90,6 +117,9 @@ class WorldSimulation:
         self._source_node: Dict[str, str] = {
             s.id: s.node_id for s in graph.demand_sources
         }
+        self._source_kind: Dict[str, str] = {
+            s.id: s.kind for s in graph.demand_sources
+        }
         self._sinks: List[str] = graph.sink_ids or []
 
         self.t_min = 0.0
@@ -101,8 +131,10 @@ class WorldSimulation:
         self.time_offset = 0.0
         self.edge_flow: Dict[str, float] = {}
         self.edge_people: Dict[str, float] = {}
+        self.edge_flow_by_mode: Dict[str, Dict[str, float]] = {}
         self.edge_pkts: Dict[str, List[_Packet]] = {}
         self._held: List[_Packet] = []
+        self._metro_clock: Dict[str, float] = {}
         self.gate_queues: Dict[str, float] = {}
         self.gate_arrivals: Dict[str, float] = {}
         self.gate_served: Dict[str, float] = {}
@@ -230,11 +262,21 @@ class WorldSimulation:
     # ------------------------------------------------------------------ #
     #  Flow primitives
     # ------------------------------------------------------------------ #
-    def _emit(self, path: List[str], gate: Optional[str], amount: float, rerouted: bool) -> None:
+    def _emit(
+        self,
+        path: List[str],
+        gate: Optional[str],
+        amount: float,
+        rerouted: bool,
+        mode: str = MODE_WALK,
+        vehicle: bool = False,
+    ) -> None:
         if not path or amount <= 1e-9:
             return
         p = _Packet(amount, list(path), gate)
         p.rerouted = rerouted
+        p.mode = mode
+        p.vehicle = vehicle
         first = path[0]
         p.ready_t = self.t_min + self._travel(first)
         if math.isinf(p.ready_t):
@@ -242,12 +284,21 @@ class WorldSimulation:
             return
         self.edge_pkts.setdefault(first, []).append(p)
 
-    def _advance(self, p: _Packet, completions: Dict[str, float], staging: Dict[str, List[_Packet]]) -> None:
+    def _advance(
+        self,
+        p: _Packet,
+        completions: Dict[str, float],
+        completions_by_mode: Dict[str, Dict[str, float]],
+        staging: Dict[str, List[_Packet]],
+    ) -> None:
         edge_id = p.path[p.idx]
-        completions[edge_id] = completions.get(edge_id, 0.0) + p.amount
+        if not p.vehicle:
+            completions[edge_id] = completions.get(edge_id, 0.0) + p.amount
+        by_mode = completions_by_mode.setdefault(edge_id, {})
+        by_mode[p.mode] = by_mode.get(p.mode, 0.0) + p.amount
         p.idx += 1
         if p.idx >= len(p.path):
-            if p.gate is not None:
+            if p.gate is not None and not p.vehicle:
                 self.gate_arrivals[p.gate] = self.gate_arrivals.get(p.gate, 0.0) + p.amount
             return
         nxt = p.path[p.idx]
@@ -272,8 +323,9 @@ class WorldSimulation:
             return
         staging.setdefault(nxt, []).append(p)
 
-    def _settle(self) -> Dict[str, float]:
+    def _settle(self) -> Tuple[Dict[str, float], Dict[str, Dict[str, float]]]:
         completions: Dict[str, float] = {}
+        completions_by_mode: Dict[str, Dict[str, float]] = {}
         staging: Dict[str, List[_Packet]] = {}
         moved_held: List[_Packet] = []
         for p in self._held:
@@ -291,14 +343,14 @@ class WorldSimulation:
             keep: List[_Packet] = []
             for p in bucket:
                 if p.ready_t <= self.t_min:
-                    self._advance(p, completions, staging)
+                    self._advance(p, completions, completions_by_mode, staging)
                 else:
                     keep.append(p)
             if keep:
                 self.edge_pkts[edge.id] = keep
         for eid, pkts in staging.items():
             self.edge_pkts.setdefault(eid, []).extend(pkts)
-        return completions
+        return completions, completions_by_mode
 
     # ------------------------------------------------------------------ #
     #  Demand / egress emission
@@ -320,7 +372,140 @@ class WorldSimulation:
                 path = self._path(src_node, gate_node)
                 if path is None:
                     continue
-                self._emit(path, gate, gshare * rate * dt, rerouted=False)
+                self._emit(path, gate, gshare * rate * dt, rerouted=False, mode=MODE_WALK)
+
+    # ------------------------------------------------------------------ #
+    #  Derived transport layer: cars / buses / metro on the road network
+    # ------------------------------------------------------------------ #
+    def _vehicle_path(self, start: str, goal: str) -> Optional[List[str]]:
+        """Free-flow route over road-capable edges (people congestion ignored).
+
+        Vehicles use the road network only: ``road_allowed`` edges plus the
+        short GATE_LINK connectors that tie parking / transit origins into the
+        road network (driveways / station approaches). Cost is free-flow time,
+        because vehicles do not react to pedestrian capacity.
+        """
+        if start == goal:
+            return []
+        key = ("V", start, goal)
+        cached = self._paths_cache.get(key)
+        if cached is not None:
+            return cached
+        source_nodes = self._source_node.values()
+
+        def usable(e: ExternalEdge) -> bool:
+            if e.id in self.closed:
+                return False
+            if e.road_allowed:
+                return True
+            return e.kind == "GATE_LINK" and (
+                e.source in source_nodes or e.target in source_nodes
+            )
+
+        dist = {start: 0.0}
+        prev: Dict[str, Tuple[str, str]] = {}
+        pq: List[Tuple[float, str]] = [(0.0, start)]
+        seen: Set[str] = set()
+        while pq:
+            d, u = heapq.heappop(pq)
+            if u in seen:
+                continue
+            seen.add(u)
+            if u == goal:
+                break
+            for e in self._adj.get(u, []):
+                if not usable(e):
+                    continue
+                nd = d + e.free_flow_min
+                if nd < dist.get(e.target, float("inf")):
+                    dist[e.target] = nd
+                    prev[e.target] = (u, e.id)
+                    heapq.heappush(pq, (nd, e.target))
+        if goal not in prev:
+            self._paths_cache[key] = None
+            return None
+        path: List[str] = []
+        cur = goal
+        while cur != start:
+            parent, eid = prev.get(cur, (None, None))
+            if parent is None:
+                self._paths_cache[key] = None
+                return None
+            path.append(eid)
+            cur = parent
+        path.reverse()
+        self._paths_cache[key] = path
+        return path
+
+    def _metro_pulse_path(self, src_node: str) -> Optional[List[str]]:
+        """Long approach path for a metro service entering the station.
+
+        From the road-capable node farthest from the station, so the train is
+        visibly travelling the external network into the station (then the
+        passengers walk out — the existing METRO walking flow).
+        """
+        best: Optional[Tuple[float, List[str]]] = None
+        for e in self.graph.edges:
+            if not e.road_allowed or e.id in self.closed:
+                continue
+            path = self._vehicle_path(e.source, src_node)
+            if path is None:
+                continue
+            cost = sum(e2.free_flow_min for e2 in (self.graph.edge(x) for x in path) if e2 is not None)
+            if best is None or cost > best[0]:
+                best = (cost, path)
+        return best[1] if best else None
+
+    def _emit_vehicles(self, arrival_rate: float, dt: float) -> None:
+        """Emit derived car/bus/metro streams from the demand plan.
+
+        Vehicle rates are *derived* from the same person demand that feeds the
+        gates (people ÷ occupancy), so the map transport layer never fabricates
+        a count the simulation did not produce. Vehicles are consumed at their
+        gate access point — they discharge into the pedestrian stream that the
+        people model already routes.
+        """
+        if arrival_rate <= 0:
+            return
+        for sid, splan in self.plan.sources.items():
+            kind = self._source_kind.get(sid)
+            mode = SOURCE_MODE.get(kind)
+            if mode is None:
+                continue
+            rate = arrival_rate * splan.share
+            src_node = self._source_node.get(sid)
+            if src_node is None:
+                continue
+            if mode == MODE_METRO:
+                self._emit_metro_pulse(sid, src_node, dt)
+                continue
+            occupancy = CAR_OCC if mode == MODE_CAR else BUS_OCC
+            vrate = rate / occupancy
+            for gate, gshare in splan.gates.items():
+                gate_node = self._gate_node.get(gate)
+                if gate_node is None or gshare <= 0:
+                    continue
+                path = self._vehicle_path(src_node, gate_node)
+                if path is None:
+                    continue
+                self._emit(
+                    path, gate, gshare * vrate * dt,
+                    rerouted=False, mode=mode, vehicle=True,
+                )
+
+    def _emit_metro_pulse(self, sid: str, src_node: str, dt: float) -> None:
+        now = self.t_min
+        last = self._metro_clock.get(sid)
+        if last is not None and now - last < METRO_HEADWAY_MIN:
+            return
+        if last is None:
+            self._metro_clock[sid] = now
+            return
+        self._metro_clock[sid] = now
+        path = self._metro_pulse_path(src_node)
+        if path is None:
+            return
+        self._emit(path, None, 1.0, rerouted=False, mode=MODE_METRO, vehicle=True)
 
     def _emit_egress(self, exit_rate: float, dt: float) -> None:
         if exit_rate <= 0 or not self._exit_aps:
@@ -431,9 +616,10 @@ class WorldSimulation:
             self.gate_arrivals[g] = 0.0
             self.gate_served[g] = 0.0
 
-        completions = self._settle()
+        completions, completions_by_mode = self._settle()
         self._emit_egress(exit_rate, dt_min)
         self._emit_arrivals(arrival_rate, dt_min)
+        self._emit_vehicles(arrival_rate, dt_min)
         self._serve_gates(dt_min)
         if arrival_rate > 0:
             self._rebalance_gates()
@@ -451,7 +637,9 @@ class WorldSimulation:
 
         # per-edge stats
         for e in self.graph.edges:
-            people = sum(p.amount for p in self.edge_pkts.get(e.id, []))
+            people = sum(
+                p.amount for p in self.edge_pkts.get(e.id, []) if not p.vehicle
+            )
             flow = completions.get(e.id, 0.0) / dt_min
             prev = self.edge_flow.get(e.id, 0.0)
             smoothed = 0.7 * prev + 0.3 * flow
@@ -463,6 +651,19 @@ class WorldSimulation:
             if len(hist) > HISTORY_LEN:
                 self.history_util[e.id] = hist[-HISTORY_LEN:]
 
+            # per-mode flow (walk people/min + vehicles/min) for the map layers
+            modes = completions_by_mode.get(e.id, {})
+            prev_modes = self.edge_flow_by_mode.get(e.id, {})
+            smoothed_modes: Dict[str, float] = {}
+            for mode, amt in modes.items():
+                smoothed_modes[mode] = round(
+                    0.7 * prev_modes.get(mode, 0.0) + 0.3 * (amt / dt_min), 3
+                )
+            for mode, val in prev_modes.items():
+                if mode not in smoothed_modes:
+                    smoothed_modes[mode] = round(0.7 * val, 3)
+            self.edge_flow_by_mode[e.id] = smoothed_modes
+
     def reset(self) -> None:
         self.t_min = 0.0
         self.tick_count = 0
@@ -470,8 +671,10 @@ class WorldSimulation:
         self.time_offset = 0.0
         self.edge_flow.clear()
         self.edge_people.clear()
+        self.edge_flow_by_mode.clear()
         self.edge_pkts.clear()
         self._held.clear()
+        self._metro_clock.clear()
         self.gate_queues.clear()
         self.gate_arrivals.clear()
         self.gate_served.clear()
@@ -496,11 +699,13 @@ class WorldSimulation:
         clone.time_offset = self.time_offset
         clone.edge_flow = dict(self.edge_flow)
         clone.edge_people = dict(self.edge_people)
+        clone.edge_flow_by_mode = {k: dict(v) for k, v in self.edge_flow_by_mode.items()}
         clone.edge_pkts = {
             eid: [self._copy_packet(p) for p in pkts]
             for eid, pkts in self.edge_pkts.items()
         }
         clone._held = [self._copy_packet(p) for p in self._held]
+        clone._metro_clock = dict(self._metro_clock)
         clone.gate_queues = dict(self.gate_queues)
         clone.gate_arrivals = dict(self.gate_arrivals)
         clone.gate_served = dict(self.gate_served)
@@ -520,6 +725,8 @@ class WorldSimulation:
         c.idx = p.idx
         c.ready_t = p.ready_t
         c.rerouted = p.rerouted
+        c.mode = p.mode
+        c.vehicle = p.vehicle
         return c
 
     # ------------------------------------------------------------------ #
@@ -606,6 +813,7 @@ class WorldSimulation:
                 time_to_critical_min=ttc,
                 closed=closed,
                 rerouted=e.id in self.rerouted_edges,
+                flow_by_mode=dict(self.edge_flow_by_mode.get(e.id, {})),
             )
 
         gates: Dict[str, WorldGateState] = {}
@@ -629,11 +837,20 @@ class WorldSimulation:
 
         sources: Dict[str, WorldSourceState] = {}
         for s in self.graph.demand_sources:
+            mode = SOURCE_MODE.get(s.kind) or MODE_WALK
+            rate = self.source_rate.get(s.id, 0.0)
+            occupancy = 1.0
+            if mode == MODE_CAR:
+                occupancy = CAR_OCC
+            elif mode == MODE_BUS:
+                occupancy = BUS_OCC
             sources[s.id] = WorldSourceState(
                 id=s.id,
                 kind=s.kind,
                 emitted_total=int(round(self.source_emitted.get(s.id, 0.0))),
-                current_rate_per_min=round(self.source_rate.get(s.id, 0.0), 1),
+                current_rate_per_min=round(rate, 1),
+                mode=mode,
+                vehicles_per_min=round(rate / occupancy, 2) if occupancy > 0 else 0.0,
             )
 
         predictions: List[WorldPrediction] = []

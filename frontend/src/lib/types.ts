@@ -627,6 +627,9 @@ export interface WorldEdgeState {
   time_to_critical_min?: number | null;
   closed: boolean;
   rerouted: boolean;
+  // Per-mode flow for truthful transport rendering: walk (people/min) plus
+  // car/bus/metro (vehicles/min). Derived from the demand plan.
+  flow_by_mode?: Record<string, number>;
 }
 
 export interface WorldGateState {
@@ -645,6 +648,10 @@ export interface WorldSourceState {
   kind: string;
   emitted_total: number;
   current_rate_per_min: number;
+  // Approach mode: walk | car | bus | metro; vehicles_per_min is derived from
+  // the demand plan (people ÷ occupancy), never fabricated.
+  mode?: string;
+  vehicles_per_min?: number;
 }
 
 export interface WorldPrediction {
