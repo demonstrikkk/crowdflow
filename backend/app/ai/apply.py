@@ -161,3 +161,27 @@ def bottlenecks_summary(sim_state) -> str:
             f"queue={b.queue} density={b.current_density:.2f} trend={b.trend} ttc={b.estimated_time_to_critical_min}"
         )
     return "\n".join(lines)
+
+
+def world_summary(sim_state) -> str:
+    """Live external-world state (demand pipeline) fed to the LLM.
+
+    The world is where venue entry actually comes from, so AI explanations
+    about "why gate A is overloaded" must see the queues and delivery rates
+    outside the gates — not just the venue interior.
+    """
+    w = getattr(sim_state, "world", None)
+    if w is None:
+        return "no external world layer"
+    lines = [f"world t={w.t_min:.1f}min risk={w.risk.value} congested_edges={w.congested_edges}"]
+    gates = [g for g in w.gates.values() if g.queue > 0 or g.served_per_min > 0]
+    gates = sorted(w.gates.values(), key=lambda g: g.queue, reverse=True)[:6]
+    for g in gates:
+        wait = f"{g.queue_wait_min:.0f}min" if g.queue_wait_min is not None else "-"
+        lines.append(
+            f"{g.gate_id} arrivals={g.arrivals_per_min:.0f}/min served={g.served_per_min:.0f}/min "
+            f"queue={g.queue} wait~{wait} risk={g.risk.value}"
+        )
+    for p in w.predictions[:4]:
+        lines.append(f"prediction {p.kind}:{p.ref} -> {p.message}")
+    return "\n".join(lines)

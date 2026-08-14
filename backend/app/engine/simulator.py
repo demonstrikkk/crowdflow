@@ -19,6 +19,7 @@ an agent is traversing walkway (u, v), route[0] == u and route[1] == v.
 from __future__ import annotations
 
 import copy
+import logging
 import math
 import random
 from collections import deque
@@ -49,12 +50,21 @@ from .routing import EdgeUsage, RoutingEngine
 from .venue import VenueGraph
 from .environment import ExternalCongestion, build_bundled_environment
 
+logger = logging.getLogger("crowdflow.engine")
+
 TICK_DT_MIN = 4.0 / 60.0            # one tick = 4 simulated seconds
 MAX_AGENTS = 1200                   # simulation population cap
 CRITICAL_UTIL = 0.85                # prediction threshold
 WALKING_SPEED = 1.2                 # m/s free flow
 COMFORT_DENSITY = 2.0               # people / m^2 used to normalise densities
 SAMPLES_PER_MIN = 1.0 / TICK_DT_MIN
+WORLD_WARMUP_MIN = 25.0             # virtual minutes the world runs before t=0
+WORLD_WARMUP_DT = 0.5
+
+
+def edge_state_key(u: str, v: str) -> str:
+    """Canonical edge key shared with the frontend (see lib/selection edgeKey)."""
+    return f"{u}\u2192{v}"
 
 
 @dataclass
@@ -192,6 +202,7 @@ class SimulationEngine:
 
         self.total_spawned = 0
         self.total_completed = 0
+        self.gate_spawns: Dict[str, int] = {g: 0 for g in self.graph.entries}
         self._completed_travel_times: List[float] = []
         self._completion_window: deque = deque(maxlen=15)   # completions per minute (15 ticks/min)
         self._queue_prev = 0
@@ -201,6 +212,19 @@ class SimulationEngine:
         # external road network + congestion (brief section 20)
         self.environment = build_bundled_environment(self.venue)
         self.external = ExternalCongestion(self.environment, self.venue)
+
+        # unified world layer (external graph + aggregate flow, P0-P3)
+        self.world: Optional[object] = None
+        try:
+            from ..world import WorldSimulation, resolve_world_graph
+
+            self.world = WorldSimulation(
+                resolve_world_graph(self.venue), self.venue, self.scenario
+            )
+            self._warmup_world()
+        except Exception as exc:  # noqa: BLE001 - never block the venue sim
+            logger.warning("world layer unavailable for %s: %s", self.venue.id, exc)
+            self.world = None
 
         self._default_gate_distribution = self._default_distribution(
             self.graph.entries, self.graph.entry_capacities
@@ -227,6 +251,7 @@ class SimulationEngine:
         self._spawn_budget = 0.0
         self.total_spawned = 0
         self.total_completed = 0
+        self.gate_spawns = {g: 0 for g in self.graph.entries}
         self._completed_travel_times.clear()
         self._completion_window.clear()
         self._queue_prev = 0
@@ -261,6 +286,9 @@ class SimulationEngine:
             es.risk_level = RiskLevel.NORMAL
         self.metrics = self._empty_metrics()
         self.external.reset()
+        if self.world is not None:
+            self.world.reset()
+            self._warmup_world()
 
     def set_speed(self, speed: float) -> None:
         self.speed = max(1.0, min(240.0, speed))
@@ -505,6 +533,38 @@ class SimulationEngine:
             return "EXIT_SURGE"
         return "ARRIVAL"
 
+    def _world_step(self, dt_min: float) -> None:
+        """Step the external world at the same demand rates as the venue."""
+        if self.world is None:
+            return
+        arrival = 0.0
+        exit_rate = 0.0
+        phase = self.current_phase()
+        if phase is not None and not self.emergency_active:
+            mult = phase.arrival_rate_multiplier
+            if self._spawn_mode(phase) == "EXIT_SURGE":
+                exit_rate = self.scenario.exit_rate_per_minute * mult
+            else:
+                arrival = self.scenario.arrival_rate_per_minute * mult
+        self.world.step(dt_min, arrival, exit_rate)
+
+    def _warmup_world(self) -> None:
+        """Run the world ahead of the venue clock so its network is populated.
+
+        Without this the venue would starve for the first ~10-30 minutes while
+        external demand physically travels source->gate. Instead the world has
+        already been running for WORLD_WARMUP_MIN virtual minutes when the event
+        starts; ``WorldSimulation.time_offset`` keeps the exposed world clock
+        aligned with the venue clock. Deterministic (no RNG in the world step).
+        """
+        if self.world is None:
+            return
+        arrival = self.scenario.arrival_rate_per_minute
+        steps = max(1, int(WORLD_WARMUP_MIN / WORLD_WARMUP_DT))
+        for _ in range(steps):
+            self.world.step(WORLD_WARMUP_DT, arrival, 0.0)
+        self.world.time_offset = WORLD_WARMUP_MIN
+
     # ------------------------------------------------------------------ #
     #  Distributions
     # ------------------------------------------------------------------ #
@@ -520,10 +580,13 @@ class SimulationEngine:
     def _weighted_choice(self, dist: Dict[str, float]) -> str:
         if not dist:
             raise ValueError("cannot sample from empty distribution")
+        total = sum(dist.values())
+        if total <= 0:
+            raise ValueError("cannot sample from zero-weight distribution")
         r = self.rng.random()
         acc = 0.0
         for key, weight in dist.items():
-            acc += weight
+            acc += weight / total
             if r <= acc:
                 return key
         return list(dist.keys())[-1]
@@ -541,9 +604,35 @@ class SimulationEngine:
     # ------------------------------------------------------------------ #
     #  Spawning
     # ------------------------------------------------------------------ #
+    def _world_gate_weights(self, dt_min: float) -> Optional[Dict[str, float]]:
+        """Per-gate entry weights from what the world actually served.
+
+        The world layer is the demand pipeline: people travel source -> world
+        edge -> access point -> venue gate. Spawning venues agents exactly at
+        the served rates makes the world a real participant — when a gate is
+        throttled or closed in the world, the venue genuinely receives less
+        (or nothing) there. Returns None when no world layer is available.
+        """
+        if self.world is None:
+            return None
+        served = self.world.served_gate_rates(dt_min)
+        weights = {
+            g: w
+            for g, w in served.items()
+            if self.graph.node_type(g) == NodeType.ENTRY and w > 0
+        }
+        if not weights or sum(weights.values()) <= 0:
+            return None
+        return weights
+
     def _spawn_arrivals(self, rate_per_min: float) -> None:
         if self.total_spawned >= self.scenario.crowd_size:
             return
+        world_weights = self._world_gate_weights(TICK_DT_MIN)
+        world_coupled = world_weights is not None
+        if world_coupled:
+            # the venue enters exactly what the external world delivered
+            rate_per_min = sum(world_weights.values())
         budget = self._spawn_budget + rate_per_min * TICK_DT_MIN / self.scale
         count = math.floor(budget)
         self._spawn_budget = budget - count
@@ -552,7 +641,18 @@ class SimulationEngine:
         while i < count:
             if self.total_spawned + self.scale > self.scenario.crowd_size:
                 break
-            
+            if world_coupled:
+                # World demand is real people, so enter them one per unit.
+                # Otherwise group multiplication would inject ~2x what the
+                # world actually delivered through the gate.
+                gate = self._weighted_choice(world_weights)
+                destination = self._weighted_choice(self.destination_distribution())
+                route = self.routing.find_path(gate, destination)
+                if route:
+                    self._add_agent(gate, destination, list(route))
+                i += 1
+                continue
+
             roll = self.rng.random()
             if roll < 0.30:
                 group_type = "FAMILY"
@@ -580,7 +680,11 @@ class SimulationEngine:
                 group_size = 1
                 
             group_id = f"g_{self.tick_count}_{self._next_agent_id}" if group_size > 1 else None
-            gate = self._weighted_choice(self.gate_distribution())
+            gate = (
+                self._weighted_choice(world_weights)
+                if world_weights is not None
+                else self._weighted_choice(self.gate_distribution())
+            )
             destination = self._weighted_choice(self.destination_distribution())
             route = self.routing.find_path(gate, destination)
             if not route:
@@ -675,6 +779,7 @@ class SimulationEngine:
         self.total_spawned += self.scale
         self.nodes[route[0]].people += self.scale
         if self.graph.node_type(route[0]) == NodeType.ENTRY:
+            self.gate_spawns[route[0]] = self.gate_spawns.get(route[0], 0) + self.scale
             self.external.record_arrival(route[0], self.scale)
         return agent
 
@@ -986,6 +1091,7 @@ class SimulationEngine:
 
         self._controlled_reroute()
         self._prune_completed()
+        self._world_step(TICK_DT_MIN)
         self._update_stats(TICK_DT_MIN)
         self.external.step(TICK_DT_MIN)
 
@@ -1185,7 +1291,7 @@ class SimulationEngine:
             result.append(Bottleneck(
                 id=f"edge_{u}_{v}",
                 kind="edge",
-                location=f"{u} → {v}",
+                location=edge_state_key(u, v),
                 current_risk=state.risk_level,
                 current_density=round(state.density, 2),
                 capacity_utilisation=round(min(1.5, state.utilisation), 3),
@@ -1299,7 +1405,17 @@ class SimulationEngine:
     def apply_intervention(self, intervention: Intervention) -> None:
         p = intervention.parameters
         kind = intervention.type
-        if kind in (InterventionType.REDIRECT, InterventionType.CHANGE_GATE):
+        # Gate-level interventions (REDIRECT, CHANGE_GATE) always act on the
+        # world demand pipeline — the world is the source of venue entry, so
+        # they change real world flow which in turn changes venue entry.
+        # Corridor closures only reach the world when explicitly scoped there
+        # (``external`` / ``external_edge``); otherwise they are venue-only.
+        if self.world is not None:
+            if kind in (InterventionType.REDIRECT, InterventionType.CHANGE_GATE) or (
+                p.get("external") or bool(p.get("external_edge"))
+            ):
+                self.world.apply_intervention(intervention)
+        if kind == InterventionType.REDIRECT:
             self._apply_redirect(p.get("from"), p.get("to"), p.get("percent", 100))
         elif kind == InterventionType.OPEN_CORRIDOR:
             self._set_edge_open(p.get("edge_id"), True)
@@ -1599,7 +1715,7 @@ class SimulationEngine:
             metrics=self.metrics,
             history=self.history,
             nodes={nid: self._element_state(nid, ns) for nid, ns in self.nodes.items()},
-            edges={"|".join(k): self._edge_element_state(k, es) for k, es in self.edges.items()},
+            edges={edge_state_key(*k): self._edge_element_state(k, es) for k, es in self.edges.items()},
             bottlenecks=bottlenecks,
             agents=agent_models,
             recommended_action=self.recommended_action(),
@@ -1608,12 +1724,13 @@ class SimulationEngine:
             incident=self.incident.model_dump() if self.incident else None,
             weather=self.weather.model_dump() if self.weather else None,
             external=self.external.state(),
+            world=self.world.state() if self.world is not None else None,
             hazard_zones=[
                 {
                     "location": self.incident.location if self.incident else None,
                     "radius_m": round(self._hazard_radius_m, 1),
                     "nodes": sorted(self._hazard_nodes),
-                    "edges": sorted(["|".join(k) for k in self._hazard_edges]),
+                    "edges": sorted([edge_state_key(*k) for k in self._hazard_edges]),
                 }
             ] if (self.incident and (self._hazard_nodes or self._hazard_edges)) else [],
             causal_graph=self._build_causal_graph(),
@@ -1676,7 +1793,9 @@ class SimulationEngine:
         ]
         clone._next_agent_id = self._next_agent_id
         clone._queue_prev = self._queue_prev
+        clone.gate_spawns = dict(self.gate_spawns)
         clone.external = self.external.copy()
+        clone.world = self.world.copy() if self.world is not None else None
         return clone
 
     def run_horizon(self, horizon_min: float = 8.0, dt_min: float = 0.125) -> None:
@@ -1712,15 +1831,23 @@ class SimulationEngine:
                     if agent is not None:
                         self._reroute(agent, exit_id)
             else:
+                world_weights = self._world_gate_weights(dt_min)
+                rate = self.scenario.arrival_rate_per_minute * phase.arrival_rate_multiplier
+                if world_weights is not None:
+                    rate = sum(world_weights.values())
                 budget = self._spawn_budget + (
-                    self.scenario.arrival_rate_per_minute * phase.arrival_rate_multiplier * dt_min / self.scale
+                    rate * dt_min / self.scale
                 )
                 count = math.floor(budget)
                 self._spawn_budget = budget - count
                 for _ in range(count):
                     if self.total_spawned + self.scale > self.scenario.crowd_size:
                         break
-                    gate = self._weighted_choice(self.gate_distribution())
+                    gate = (
+                        self._weighted_choice(world_weights)
+                        if world_weights is not None
+                        else self._weighted_choice(self.gate_distribution())
+                    )
                     destination = self._weighted_choice(self.destination_distribution())
                     route = self.routing.find_path(gate, destination)
                     if route:
@@ -1749,6 +1876,7 @@ class SimulationEngine:
         for agent in self.agents:
             self._move_agent_coarse(agent, dt_min)
         self._prune_completed()
+        self._world_step(dt_min)
         self._update_stats(dt_min)
         self.external.step(dt_min)
 
@@ -1806,6 +1934,28 @@ class SimulationEngine:
         candidates: List[Intervention] = []
         bns = self.bottlenecks()
         phase = self.phase_name()
+
+        # world demand-pipeline gate candidates: venue entry comes from the
+        # world, so the optimizer must test throttling / closing the gates
+        # that feed the crowd. These run against the real world simulation.
+        if self.world is not None and phase != "EXIT_SURGE":
+            wstate = self.world.state()
+            busy = [g for g in wstate.gates.values() if g.queue > 0]
+            if busy:
+                hot = max(busy, key=lambda g: g.queue)
+                if hot.risk.value in ("HIGH", "CRITICAL"):
+                    candidates.append(Intervention(
+                        id=f"gate_restrict_{hot.gate_id}",
+                        type=InterventionType.CHANGE_GATE,
+                        description=f"Reduce {hot.gate_id} throughput to 50/min",
+                        parameters={"gate": hot.gate_id, "capacity": 50, "external": True},
+                    ))
+                    candidates.append(Intervention(
+                        id=f"gate_close_{hot.gate_id}",
+                        type=InterventionType.CHANGE_GATE,
+                        description=f"Close {hot.gate_id} to external demand",
+                        parameters={"gate": hot.gate_id, "capacity": 0, "external": True},
+                    ))
 
         edge_bns = [b for b in bns if b.kind == "edge"]
         for bn in edge_bns[:2]:

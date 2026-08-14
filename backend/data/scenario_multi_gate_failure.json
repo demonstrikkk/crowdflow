@@ -1,0 +1,66 @@
+{
+  "id": "multi_gate_failure",
+  "name": "Multi-Gate Failure · East & West",
+  "venue_id": "unity_arena",
+  "crowd_size": 8000,
+  "arrival_rate_per_minute": 320,
+  "exit_rate_per_minute": 200,
+  "gate_distribution": {
+    "GATE_A": 0.2,
+    "GATE_B": 0.12,
+    "GATE_C": 0.25,
+    "GATE_D": 0.08,
+    "GATE_E": 0.25,
+    "GATE_F": 0.1
+  },
+  "destination_distribution": {
+    "SEAT_N": 0.3,
+    "SEAT_S": 0.3,
+    "SEAT_E": 0.17,
+    "SEAT_W": 0.17,
+    "CONCESSION_N": 0.03,
+    "CONCESSION_S": 0.03
+  },
+  "exit_distribution": {
+    "EXIT_N": 0.25,
+    "EXIT_S": 0.25,
+    "EXIT_E": 0.25,
+    "EXIT_W": 0.25
+  },
+  "event_phases": [
+    {
+      "name": "ENTRY",
+      "start_minute": 0,
+      "end_minute": 25,
+      "arrival_rate_multiplier": 1.0
+    },
+    {
+      "name": "PEAK",
+      "start_minute": 25,
+      "end_minute": 60,
+      "arrival_rate_multiplier": 0.12
+    },
+    {
+      "name": "INTERVAL",
+      "start_minute": 60,
+      "end_minute": 75,
+      "arrival_rate_multiplier": 0.06
+    },
+    {
+      "name": "EXIT_SURGE",
+      "start_minute": 75,
+      "end_minute": 105,
+      "arrival_rate_multiplier": 1.0
+    }
+  ],
+  "surge_departure_spread_min": 3.0,
+  "special": {
+    "world": {
+      "gate_capacities": {
+        "GATE_C": 0,
+        "GATE_E": 0
+      },
+      "note": "GATE_C and GATE_E are out of service. Their arrivals queue and rebalance onto the surviving gates, which overload under the extra demand."
+    }
+  }
+}

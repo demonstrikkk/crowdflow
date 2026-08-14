@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import ai, blueprint, environment, scenarios, simulation, venues, vision
+from .routers import ai, blueprint, environment, scenarios, simulation, twin, venues, vision, world
 from .storage import storage
 
 app = FastAPI(
@@ -27,8 +27,10 @@ app.include_router(scenarios.router, prefix="/api/scenarios", tags=["scenarios"]
 app.include_router(simulation.router, prefix="/api/simulation", tags=["simulation"])
 app.include_router(vision.router, prefix="/api", tags=["vision"])
 app.include_router(environment.router, prefix="/api/environment", tags=["environment"])
+app.include_router(world.router, prefix="/api/world", tags=["world"])
 app.include_router(ai.router, tags=["ai"])
 app.include_router(blueprint.router, prefix="/api/blueprint", tags=["blueprint"])
+app.include_router(twin.router, prefix="/api/twin", tags=["twin-generation"])
 
 
 @app.get("/", tags=["system"])
@@ -41,12 +43,14 @@ def root():
 
 
 @app.get("/api/health", tags=["system"])
-def health():
+async def health():
     venues = storage.list_venues()
     scenarios = storage.list_scenarios()
     from .ai.factory import provider_status
+    from .twin.orchestrator import twin_orchestrator
 
     ai = provider_status()
+    twin = await twin_orchestrator.provider_status()
     return {
         "status": "ok",
         "venues_loaded": len(venues),
@@ -55,6 +59,10 @@ def health():
         "ai_provider": ai.get("provider"),
         "ai_model": ai.get("model"),
         "ai_configured": ai.get("configured", False),
+        "twin_provider": twin.provider,
+        "twin_model": twin.model,
+        "twin_online": twin.online,
+        "twin_provenance": twin.provenance.value,
     }
 
 

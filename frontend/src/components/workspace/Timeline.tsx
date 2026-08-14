@@ -3,6 +3,12 @@ import { Pause, Play, RotateCcw } from 'lucide-react';
 import type { PlaybackFrame } from '../../store/SimulationContext';
 import type { EventPhaseModel } from '../../lib/types';
 
+export interface TimelineMarker {
+  t: number;
+  label: string;
+  tone: 'danger' | 'warn' | 'ok' | 'active';
+}
+
 export interface TimelineProps {
   buffer: PlaybackFrame[];
   frameIndex: number;
@@ -19,6 +25,7 @@ export interface TimelineProps {
   onRewind: () => void;
   onSpeed: (s: number) => void;
   simId: string | null;
+  markers?: TimelineMarker[];
 }
 
 const PHASE_TONE: Record<string, string> = {
@@ -26,6 +33,13 @@ const PHASE_TONE: Record<string, string> = {
   PEAK: 'var(--od-warn)',
   INTERVAL: 'var(--od-line)',
   EXIT_SURGE: 'var(--od-danger)',
+};
+
+const MARKER_TONE: Record<TimelineMarker['tone'], string> = {
+  danger: 'var(--od-danger)',
+  warn: 'var(--od-warn)',
+  ok: 'var(--od-ok)',
+  active: 'var(--od-active, #8d6be8)',
 };
 
 export default function Timeline({
@@ -44,6 +58,7 @@ export default function Timeline({
   onRewind,
   onSpeed,
   simId,
+  markers = [],
 }: TimelineProps) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [drag, setDrag] = useState<number | null>(null);
@@ -152,6 +167,18 @@ export default function Timeline({
           <div key={i} className="absolute top-0 bottom-0 w-px bg-od-line" style={{ left: `${(i / 8) * 100}%`, opacity: 0.35 }} />
         ))}
 
+        {/* incident markers */}
+        {markers.map((m) => (
+          <div
+            key={`${m.t}-${m.label}`}
+            className="absolute top-0 z-[1] flex h-full items-center"
+            style={{ left: `${Math.min(100, (m.t / span) * 100)}%` }}
+            title={`${m.t.toFixed(1)} min — ${m.label}`}
+          >
+            <div className="h-2.5 w-2.5 rotate-45 border border-black/30" style={{ background: MARKER_TONE[m.tone] }} />
+          </div>
+        ))}
+
         {/* playhead */}
         <div
           className="absolute top-0 bottom-0 w-[2px] bg-od-ink"
@@ -194,6 +221,22 @@ export default function Timeline({
           </button>
         ))}
         <span className="flex-1" />
+        {markers.length > 0 && (
+          <div className="flex items-center gap-1">
+            {markers.slice(-6).map((m) => (
+              <button
+                key={`chip-${m.t}-${m.label}`}
+                className="chip"
+                title={`${m.t.toFixed(1)} min`}
+                onClick={() => onJump(Math.round(m.t))}
+                disabled={!simId}
+              >
+                <span className="w-1.5 h-1.5 rotate-45 inline-block" style={{ background: MARKER_TONE[m.tone] }} />
+                {m.label}
+              </button>
+            ))}
+          </div>
+        )}
         <span className="text-[9px] uppercase tracking-[0.18em] text-od-muted mr-1">Event</span>
         <div className="flex items-center gap-1">
           {phases.map((p) => (

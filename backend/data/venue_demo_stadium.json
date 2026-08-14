@@ -2,7 +2,7 @@
   "schema_version": 2,
   "venue": {
     "id": "unity_arena",
-    "name": "Unity Arena \u2014 Grand Prix Stadium",
+    "name": "Unity Arena — Grand Prix Stadium",
     "width": 1000.0,
     "height": 620.0,
     "nodes": [
@@ -329,6 +329,30 @@
         "area_m2": 4000.0,
         "spatial_ref": null,
         "metadata": {}
+      },
+      {
+        "id": "EMERGENCY_3",
+        "position": {
+          "x": 500.0,
+          "y": 60.0
+        },
+        "type": "EMERGENCY_EXIT",
+        "capacity": 250.0,
+        "area_m2": 80.0,
+        "spatial_ref": "opening:EMERGENCY_3",
+        "metadata": {}
+      },
+      {
+        "id": "EMERGENCY_4",
+        "position": {
+          "x": 900.0,
+          "y": 300.0
+        },
+        "type": "EMERGENCY_EXIT",
+        "capacity": 250.0,
+        "area_m2": 80.0,
+        "spatial_ref": "opening:EMERGENCY_4",
+        "metadata": {}
       }
     ],
     "edges": [
@@ -602,7 +626,7 @@
         "destination": "SEAT_N",
         "length_m": 25.0,
         "width_m": 9.0,
-        "capacity": 70.0,
+        "capacity": 120.0,
         "is_open": true,
         "is_emergency": false,
         "exposure": "INDOOR",
@@ -614,7 +638,7 @@
         "destination": "SEAT_E",
         "length_m": 25.0,
         "width_m": 9.0,
-        "capacity": 70.0,
+        "capacity": 120.0,
         "is_open": true,
         "is_emergency": false,
         "exposure": "INDOOR",
@@ -626,7 +650,7 @@
         "destination": "SEAT_S",
         "length_m": 25.0,
         "width_m": 9.0,
-        "capacity": 70.0,
+        "capacity": 120.0,
         "is_open": true,
         "is_emergency": false,
         "exposure": "INDOOR",
@@ -638,7 +662,7 @@
         "destination": "SEAT_W",
         "length_m": 25.0,
         "width_m": 9.0,
-        "capacity": 70.0,
+        "capacity": 120.0,
         "is_open": true,
         "is_emergency": false,
         "exposure": "INDOOR",
@@ -715,6 +739,54 @@
         "is_emergency": true,
         "exposure": "INDOOR",
         "geometry_id": "PATH_E_CKS_E2"
+      },
+      {
+        "id": "E_CKN_E3",
+        "source": "CHECKPOINT_N",
+        "destination": "EMERGENCY_3",
+        "length_m": 20.0,
+        "width_m": 14.0,
+        "capacity": 200.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CKN_E3"
+      },
+      {
+        "id": "E_CN_E3",
+        "source": "CONCOURSE_N",
+        "destination": "EMERGENCY_3",
+        "length_m": 20.0,
+        "width_m": 14.0,
+        "capacity": 200.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CN_E3"
+      },
+      {
+        "id": "E_CKE_E4",
+        "source": "CHECKPOINT_E",
+        "destination": "EMERGENCY_4",
+        "length_m": 20.0,
+        "width_m": 14.0,
+        "capacity": 200.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CKE_E4"
+      },
+      {
+        "id": "E_CE_E4",
+        "source": "CONCOURSE_E",
+        "destination": "EMERGENCY_4",
+        "length_m": 20.0,
+        "width_m": 14.0,
+        "capacity": 200.0,
+        "is_open": true,
+        "is_emergency": true,
+        "exposure": "INDOOR",
+        "geometry_id": "PATH_E_CE_E4"
       }
     ],
     "metadata": {
@@ -1561,6 +1633,40 @@
           "source": "AUTHORED",
           "node": "EMERGENCY_2"
         }
+      },
+      {
+        "id": "EMERGENCY_3",
+        "level_id": "L1",
+        "type": "EMERGENCY_EXIT",
+        "position": {
+          "x": 500.0,
+          "y": 60.0
+        },
+        "width_m": 14.0,
+        "rotation_deg": 0.0,
+        "is_emergency": true,
+        "capacity_ppm": 200.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "EMERGENCY_3"
+        }
+      },
+      {
+        "id": "EMERGENCY_4",
+        "level_id": "L1",
+        "type": "EMERGENCY_EXIT",
+        "position": {
+          "x": 900.0,
+          "y": 300.0
+        },
+        "width_m": 14.0,
+        "rotation_deg": 90.0,
+        "is_emergency": true,
+        "capacity_ppm": 200.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "node": "EMERGENCY_4"
+        }
       }
     ],
     "paths": [
@@ -2186,6 +2292,82 @@
         "metadata": {
           "source": "AUTHORED",
           "edge": "E_CKS_E2"
+        }
+      },
+      {
+        "id": "PATH_E_CKN_E3",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 240.0
+          },
+          {
+            "x": 500.0,
+            "y": 60.0
+          }
+        ],
+        "width_m": 14.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CKN_E3"
+        }
+      },
+      {
+        "id": "PATH_E_CN_E3",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 500.0,
+            "y": 140.0
+          },
+          {
+            "x": 500.0,
+            "y": 60.0
+          }
+        ],
+        "width_m": 14.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CN_E3"
+        }
+      },
+      {
+        "id": "PATH_E_CKE_E4",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 770.0,
+            "y": 300.0
+          },
+          {
+            "x": 900.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 14.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CKE_E4"
+        }
+      },
+      {
+        "id": "PATH_E_CE_E4",
+        "level_id": "L1",
+        "centerline": [
+          {
+            "x": 830.0,
+            "y": 300.0
+          },
+          {
+            "x": 900.0,
+            "y": 300.0
+          }
+        ],
+        "width_m": 14.0,
+        "metadata": {
+          "source": "AUTHORED",
+          "edge": "E_CE_E4"
         }
       }
     ],

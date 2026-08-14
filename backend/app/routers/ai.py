@@ -19,6 +19,7 @@ from ..ai.apply import (
     bottlenecks_summary,
     metrics_summary,
     scenario_context,
+    world_summary,
 )
 from ..ai.base import AIError, AIValidationError, ScenarioDelta
 from ..ai.factory import get_provider, provider_status
@@ -147,7 +148,7 @@ def explain(request: ExplainRequest):
     provider = get_provider()
     try:
         explanation = provider.explainSimulation(
-            metrics_summary(state), bottlenecks_summary(state)
+            metrics_summary(state), bottlenecks_summary(state), world_summary(state)
         )
     except AIError as exc:
         raise HTTPException(status_code=502, detail=str(exc)) from exc

@@ -1,0 +1,11 @@
+{
+  "job_id": "twg_1fa0e41c",
+  "provider": "colab",
+  "model": "trellis",
+  "provenance": "PROCEDURAL",
+  "used_adapter": "procedural",
+  "notes": [
+    "requested model 'trellis' unavailable; deterministic fallback used"
+  ],
+  "worker": "crowdflow-colab-3d-worker"
+}

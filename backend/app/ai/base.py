@@ -127,7 +127,7 @@ class AIProvider(abc.ABC):
 
     @abc.abstractmethod
     def explainSimulation(
-        self, metrics_summary: str, bottlenecks_summary: str
+        self, metrics_summary: str, bottlenecks_summary: str, world_summary: str = ""
     ) -> SimulationExplanation:
         """Explain what the simulation data shows and what to try next."""
 

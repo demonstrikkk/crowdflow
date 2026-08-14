@@ -459,6 +459,7 @@ export interface SimulationState {
   weather?: WeatherModel | null;
   hazard_zones?: HazardZone[];
   external?: ExternalState | null;
+  world?: WorldState | null;
   causal_graph?: CausalGraph | null;
 }
 
@@ -534,6 +535,136 @@ export interface ExternalState {
   congested_elements: number;
   risk: RiskLevel;
   summary: string;
+}
+
+// --------------------------------------------------------------------------- //
+//  World layer — unified external graph (backend /api/world + sim.world)
+//  The map is part of the simulation: demand sources route over the external
+//  graph to venue gates, and the venue drains back to outer sinks.
+// --------------------------------------------------------------------------- //
+export interface WorldNode {
+  id: string;
+  kind: 'ROAD' | 'FOOTPATH' | 'TRANSIT' | 'PARKING' | 'GATE_LINK' | 'SINK' | string;
+  position: WorldPosition;
+  name?: string | null;
+  lat?: number | null;
+  lon?: number | null;
+  source: string;
+}
+
+export interface WorldEdge {
+  id: string;
+  source: string;
+  target: string;
+  kind: 'ROAD' | 'FOOTPATH' | 'STREET' | 'GATE_LINK' | string;
+  length_m: number;
+  walking_allowed: boolean;
+  road_allowed: boolean;
+  capacity_estimate: number;
+  speed_mps: number;
+  free_flow_min: number;
+  geometry: WorldPosition[];
+  capacity_source: 'estimated' | 'measured' | string;
+  closed?: boolean;
+}
+
+export interface WorldAccessPoint {
+  id: string;
+  gate_id: string;
+  node_id: string;
+  kind: 'ENTRY' | 'EXIT' | 'EMERGENCY_EXIT';
+  position: WorldPosition;
+  service_ppm: number;
+}
+
+export interface WorldDemandSource {
+  id: string;
+  kind: 'METRO' | 'BUS' | 'PARKING' | 'DROP_OFF' | 'WALKING' | 'GATHERING' | string;
+  name: string;
+  node_id: string;
+  position: WorldPosition;
+  capacity: number;
+  share: number;
+  gate_share: Record<string, number>;
+  data_source: 'SIMULATED' | 'HISTORICAL' | 'LIVE' | 'USER_INPUT';
+}
+
+export interface WorldProvenance {
+  provider: 'OSM' | 'DEMO' | 'CACHED_OSM' | string;
+  fetched_at?: string | null;
+  confidence: 'high' | 'estimated' | 'demo' | string;
+  notes: string[];
+}
+
+export interface WorldBbox {
+  min_x: number;
+  min_y: number;
+  max_x: number;
+  max_y: number;
+}
+
+export interface WorldGraph {
+  venue_id: string;
+  provider: 'OSM' | 'DEMO' | 'CACHED_OSM' | string;
+  provenance: WorldProvenance;
+  bbox: WorldBbox;
+  nodes: WorldNode[];
+  edges: WorldEdge[];
+  access_points: WorldAccessPoint[];
+  demand_sources: WorldDemandSource[];
+  sink_ids: string[];
+  notes: string[];
+}
+
+export interface WorldEdgeState {
+  id: string;
+  kind: string;
+  flow_per_min: number;
+  people: number;
+  utilisation: number;
+  congestion: number;
+  risk: RiskLevel;
+  time_to_critical_min?: number | null;
+  closed: boolean;
+  rerouted: boolean;
+}
+
+export interface WorldGateState {
+  gate_id: string;
+  arrivals_per_min: number;
+  served_per_min: number;
+  queue: number;
+  queue_wait_min?: number | null;
+  congestion: number;
+  risk: RiskLevel;
+  demand_by_source: Record<string, number>;
+}
+
+export interface WorldSourceState {
+  id: string;
+  kind: string;
+  emitted_total: number;
+  current_rate_per_min: number;
+}
+
+export interface WorldPrediction {
+  id: string;
+  kind: 'EDGE' | 'GATE' | 'ROUTE';
+  ref: string;
+  in_minutes: number;
+  severity: RiskLevel;
+  message: string;
+}
+
+export interface WorldState {
+  t_min: number;
+  edges: Record<string, WorldEdgeState>;
+  gates: Record<string, WorldGateState>;
+  sources: Record<string, WorldSourceState>;
+  risk: RiskLevel;
+  congested_edges: number;
+  summary: string;
+  predictions: WorldPrediction[];
 }
 
 // --------------------------------------------------------------------------- //
@@ -903,4 +1034,64 @@ export interface VenueDigitalTwin {
   confidence: number;
   metadata: Record<string, unknown>;
   source_references: TwinSourceReference[];
+}
+
+// --------------------------------------------------------------------------- //
+//  AI 3D Digital Twin generation (backend /api/twin/*)
+//  A TwinGenerationJob turns a blueprint image into a GLB + semantic model
+//  (venue.glb / venue.semantic.json / generation.metadata.json) via a provider
+//  that may be a local procedural pipeline, a simulated mock, or a remote
+//  Colab GPU worker. Provenance is always reported honestly.
+// --------------------------------------------------------------------------- //
+export type TwinProvenance = 'AI' | 'PROCEDURAL' | 'SIMULATED';
+export type TwinStage =
+  | 'QUEUED' | 'DOWNLOADING' | 'ANALYZING' | 'GENERATING_GEOMETRY'
+  | 'GENERATING_TEXTURE' | 'SEMANTIC_PROCESSING' | 'EXPORTING'
+  | 'COMPLETE' | 'FAILED';
+export type TwinJobStatus = 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+
+export interface TwinArtifact {
+  name: string;
+  kind: 'GLB' | 'SEMANTIC' | 'METADATA' | 'PREVIEW' | 'INPUT';
+  path: string;
+  size_bytes: number;
+  mime: string;
+}
+
+export type TwinBindingKind = 'ENTRY_GATE' | 'EXIT_GATE' | 'EMERGENCY_EXIT' | 'ZONE' | 'PATH';
+
+export interface TwinBinding {
+  node_id: string;
+  kind: TwinBindingKind;
+  spatial_id: string;
+  glb_node: string;
+  glb_mesh: string;
+  simulation_node: string;
+}
+
+export interface TwinGenerationJob {
+  id: string;
+  provider: string;
+  model: string;
+  provenance: TwinProvenance;
+  status: TwinJobStatus;
+  stage: TwinStage;
+  progress: number;
+  error?: string | null;
+  venue_id?: string | null;
+  scenario_id?: string | null;
+  created_at: string;
+  updated_at: string;
+  artifacts: TwinArtifact[];
+  bindings: TwinBinding[];
+  metadata: Record<string, unknown>;
+  logs: string[];
+}
+
+export interface TwinProviderStatus {
+  provider: string;
+  model: string;
+  online: boolean;
+  provenance: TwinProvenance;
+  reason?: string | null;
 }

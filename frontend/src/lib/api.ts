@@ -13,9 +13,12 @@ import type {
   ScenarioDelta,
   ScenarioModel,
   SimulationState,
+  TwinGenerationJob,
+  TwinProviderStatus,
   VenueDigitalTwin,
   VenueModel,
   VenueSpatialModel,
+  WorldGraph,
 } from './types';
 
 const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000/api';
@@ -251,6 +254,33 @@ export const api = {
       method: 'POST',
     }),
 
+  /** World layer: unified external graph for a venue (map is part of the sim). */
+  worldGraph: (venueId: string) =>
+    request<WorldGraph>(`/world/graph?venue_id=${encodeURIComponent(venueId)}`),
+  refreshWorldGraph: (venueId: string) =>
+    request<WorldGraph>(`/world/refresh?venue_id=${encodeURIComponent(venueId)}`, {
+      method: 'POST',
+    }),
+
+  /** AI 3D Digital Twin generation (async job). */
+  twinProvider: () => request<TwinProviderStatus>('/twin/provider'),
+  createTwinJob: (file: File, provider?: string) => {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    if (provider) form.append('provider', provider);
+    return fetch(`${API_BASE}/twin/jobs`, { method: 'POST', body: form }).then(
+      async (res) => {
+        if (!res.ok) throw new Error((await res.json().catch(() => null))?.detail ?? res.statusText);
+        return (await res.json()) as TwinGenerationJob;
+      },
+    );
+  },
+  twinJob: (id: string) => request<TwinGenerationJob>(`/twin/jobs/${id}`),
+  cancelTwinJob: (id: string) =>
+    request<TwinGenerationJob>(`/twin/jobs/${id}/cancel`, { method: 'POST' }),
+  retryTwinJob: (id: string) =>
+    request<TwinGenerationJob>(`/twin/jobs/${id}/retry`, { method: 'POST' }),
+
   health: () => request<{ status: string; venues_loaded?: number; scenarios_loaded?: number }>('/health'),
 };
 
@@ -258,6 +288,17 @@ export function wsUrl(simId: string): string {
   const base = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000/api';
   const wsBase = base.replace(/^http/, 'ws');
   return `${wsBase}/simulation/${simId}/live`;
+}
+
+export function wsTwinUrl(jobId: string): string {
+  const base = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000/api';
+  const wsBase = base.replace(/^http/, 'ws');
+  return `${wsBase}/twin/jobs/${jobId}/live`;
+}
+
+export function twinArtifactUrl(jobId: string, name: string): string {
+  const base = import.meta.env.VITE_API_BASE ?? 'http://localhost:8000/api';
+  return `${base}/twin/jobs/${jobId}/artifacts/${encodeURIComponent(name)}`;
 }
 
 export { API_BASE };

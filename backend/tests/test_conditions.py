@@ -128,8 +128,10 @@ def test_hazard_marks_risk_and_state(make_engine):
         assert zone["radius_m"] > 0
         assert zone["nodes"]
     # any blocked edge must report as a hazard element
+    from app.engine.simulator import edge_state_key
+
     for (u, v) in e._hazard_edges:
-        es = st.edges.get(f"{u}|{v}")
+        es = st.edges.get(edge_state_key(u, v))
         if es is not None:
             assert es.hazard is True
             assert es.risk in ("HIGH", "CRITICAL")

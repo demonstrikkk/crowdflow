@@ -1,0 +1,20 @@
+{
+  "id": "twg_1fa0e41c",
+  "status": "COMPLETE",
+  "stage": "COMPLETE",
+  "progress": 100,
+  "message": "twin generated (PROCEDURAL, procedural)",
+  "error": null,
+  "provenance": "PROCEDURAL",
+  "model": "trellis",
+  "adapter": "procedural",
+  "created_at": "2026-08-14T05:26:02+00:00",
+  "updated_at": "2026-08-14T05:26:02+00:00",
+  "artifacts": [
+    "generation.metadata.json",
+    "input.png",
+    "job.json",
+    "semantic.json",
+    "venue.glb"
+  ]
+}

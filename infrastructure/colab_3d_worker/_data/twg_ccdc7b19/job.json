@@ -1,0 +1,17 @@
+{
+  "id": "twg_ccdc7b19",
+  "status": "CANCELLED",
+  "stage": "ANALYZING",
+  "progress": 10,
+  "message": "cancelled by operator",
+  "error": null,
+  "provenance": null,
+  "model": "procedural",
+  "adapter": null,
+  "created_at": "2026-08-14T05:26:03+00:00",
+  "updated_at": "2026-08-14T05:26:03+00:00",
+  "artifacts": [
+    "input.png",
+    "job.json"
+  ]
+}

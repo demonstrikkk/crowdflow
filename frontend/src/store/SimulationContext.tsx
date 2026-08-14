@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import * as React from 'react';
-import { api, wsUrl } from '../lib/api';
+import { api, wsUrl, wsTwinUrl } from '../lib/api';
 import type {
   AiExplainResponse,
   AiProviderStatus,
@@ -19,6 +19,8 @@ import type {
   ScenarioDelta,
   ScenarioModel,
   SimulationState,
+  TwinGenerationJob,
+  TwinProviderStatus,
   VenueModel,
   ViewMode,
 } from '../lib/types';
@@ -104,6 +106,16 @@ interface SimulationContextValue {
   runAiSimulation: (query: string, delta?: ScenarioDelta) => Promise<boolean>;
   generateAiIdeas: () => Promise<void>;
   explainCurrent: () => Promise<void>;
+
+  twinProvider: TwinProviderStatus | null;
+  twinJob: TwinGenerationJob | null;
+  twinWsConnected: boolean;
+  twinBusy: boolean;
+  refreshTwinProvider: () => Promise<void>;
+  buildTwin: (file: File, provider?: string) => Promise<string | null>;
+  cancelTwin: () => Promise<void>;
+  retryTwin: () => Promise<void>;
+  clearTwin: () => void;
 }
 
 const SimulationContext = createContext<SimulationContextValue | null>(null);
@@ -163,6 +175,13 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   const [aiIdeas, setAiIdeas] = useState<AiSuggestion[]>([]);
   const [aiExplanation, setAiExplanation] = useState<AiExplainResponse | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
+
+  // AI 3D digital twin generation (async job + WS progress)
+  const [twinProvider, setTwinProvider] = useState<TwinProviderStatus | null>(null);
+  const [twinJob, setTwinJob] = useState<TwinGenerationJob | null>(null);
+  const [twinWsConnected, setTwinWsConnected] = useState(false);
+  const [twinBusy, setTwinBusy] = useState(false);
+  const twinWsRef = useRef<WebSocket | null>(null);
 
   // counterfactual
   const [cfSim, setCfSim] = useState<SimulationState | null>(null);
@@ -634,6 +653,103 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
   }, [simId]);
 
   // ------------------------------------------------------------------ //
+  //  AI 3D Digital Twin generation
+  // ------------------------------------------------------------------ //
+  const refreshTwinProvider = useCallback(async () => {
+    try {
+      setTwinProvider(await api.twinProvider());
+    } catch {
+      setTwinProvider(null);
+    }
+  }, []);
+
+  const clearTwin = useCallback(() => {
+    twinWsRef.current?.close();
+    twinWsRef.current = null;
+    setTwinJob(null);
+    setTwinWsConnected(false);
+  }, []);
+
+  // live twin job progress feed
+  useEffect(() => {
+    const job = twinJob;
+    if (!job || job.status === 'COMPLETED' || job.status === 'FAILED' || job.status === 'CANCELLED') {
+      setTwinWsConnected(false);
+      return;
+    }
+    let disposed = false;
+    const ws = new WebSocket(wsTwinUrl(job.id));
+    twinWsRef.current = ws;
+    setTwinWsConnected(false);
+    ws.onopen = () => {
+      if (!disposed) setTwinWsConnected(true);
+    };
+    ws.onmessage = (event) => {
+      if (disposed) return;
+      try {
+        const state = JSON.parse(event.data as string) as TwinGenerationJob;
+        if (!state || state.id !== job.id) return;
+        setTwinJob(state);
+      } catch {
+        /* ignore malformed frame */
+      }
+    };
+    ws.onclose = () => {
+      if (!disposed) setTwinWsConnected(false);
+    };
+    ws.onerror = () => {
+      if (!disposed) setTwinWsConnected(false);
+    };
+    return () => {
+      disposed = true;
+      ws.close();
+      if (twinWsRef.current === ws) twinWsRef.current = null;
+    };
+  }, [twinJob?.id, twinJob?.status]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const buildTwin = useCallback(
+    async (file: File, provider?: string): Promise<string | null> => {
+      setTwinBusy(true);
+      setError(null);
+      try {
+        const job = await api.createTwinJob(file, provider);
+        setTwinJob(job);
+        setTwinProvider(await api.twinProvider().catch(() => null));
+        return job.id;
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Twin build failed');
+        return null;
+      } finally {
+        setTwinBusy(false);
+      }
+    },
+    [],
+  );
+
+  const cancelTwin = useCallback(async () => {
+    if (!twinJob) return;
+    try {
+      setTwinJob(await api.cancelTwinJob(twinJob.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Cancel failed');
+    }
+  }, [twinJob]);
+
+  const retryTwin = useCallback(async () => {
+    if (!twinJob) return;
+    setTwinBusy(true);
+    try {
+      const job = await api.retryTwinJob(twinJob.id);
+      setTwinJob(job);
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Retry failed');
+    } finally {
+      setTwinBusy(false);
+    }
+  }, [twinJob]);
+
+  // ------------------------------------------------------------------ //
   //  Counterfactual
   // ------------------------------------------------------------------ //
   const runCounterfactual = useCallback(
@@ -762,6 +878,15 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       runAiSimulation,
       generateAiIdeas,
       explainCurrent,
+      twinProvider,
+      twinJob,
+      twinWsConnected,
+      twinBusy,
+      refreshTwinProvider,
+      buildTwin,
+      cancelTwin,
+      retryTwin,
+      clearTwin,
     }),
     [
       backendOnline, venues, scenarios, venue, scenario, sim, simId, wsConnected, busy, error,
@@ -772,6 +897,8 @@ export function SimulationProvider({ children }: { children: ReactNode }) {
       jumpToMinute, optimize, applyIntervention, refreshCatalog, clearSimulation, clearError,
       aiConfigured, aiProvider, aiBusy, aiIdeas, aiExplanation, aiError, checkAiStatus,
       runAiSimulation, generateAiIdeas, explainCurrent,
+      twinProvider, twinJob, twinWsConnected, twinBusy, refreshTwinProvider, buildTwin,
+      cancelTwin, retryTwin, clearTwin,
       viewMode, setViewMode, selectedAgentId, setSelectedAgentId,
       simRef, cfSimRef, compareViewMode, setCompareViewMode,
     ],

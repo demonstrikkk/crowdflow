@@ -1,15 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { AutoLoadBridge } from '../AutoLoadBridge';
+import type { ScenarioModel, VenueModel } from '../../../lib/types';
 
 // Mock useSimulation
 const mockSelectVenue = vi.fn();
 const mockSelectScenario = vi.fn().mockResolvedValue(undefined);
 
 const baseContext = {
-  venues: [],
-  venue: null,
-  scenarios: [],
+  venues: [] as VenueModel[],
+  venue: null as VenueModel | null,
+  scenarios: [] as ScenarioModel[],
   selectVenue: mockSelectVenue,
   selectScenario: mockSelectScenario,
 };
@@ -25,10 +26,10 @@ beforeEach(() => {
   mockContext = { ...baseContext };
 });
 
-const unityArenaVenue = { id: 'unity_arena', name: 'Unity Arena', width: 1000, height: 620, nodes: [], edges: [] };
-const otherVenue = { id: 'other_venue', name: 'Other', width: 800, height: 600, nodes: [], edges: [] };
+const unityArenaVenue: VenueModel = { id: 'unity_arena', name: 'Unity Arena', width: 1000, height: 620, nodes: [], edges: [] };
+const otherVenue: VenueModel = { id: 'other_venue', name: 'Other', width: 800, height: 600, nodes: [], edges: [] };
 
-const defaultScenario = {
+const defaultScenario: ScenarioModel = {
   id: 'sc1', name: 'Default Scenario', venue_id: 'unity_arena',
   crowd_size: 1000, arrival_rate_per_minute: 50, exit_rate_per_minute: 30,
   surge_departure_spread_min: 10, gate_distribution: {}, destination_distribution: {},

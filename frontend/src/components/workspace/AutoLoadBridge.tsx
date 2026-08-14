@@ -48,6 +48,27 @@ export function AutoLoadBridge() {
     }
   }, [s.venues, s.venue, s.scenarios]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // First-run golden demo: once a venue + scenario are ready and no simulation
+  // is running, auto-start the event so the living world is alive immediately.
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (autoStarted.current) return;
+    if (!s.venue || !s.scenario || s.sim || s.busy) return;
+    autoStarted.current = true;
+    void s.runSimulation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.venue, s.scenario, s.sim, s.busy]);
+
+  // Begin live playback the moment the simulation WebSocket is live.
+  const autoPlayed = useRef(false);
+  useEffect(() => {
+    if (autoPlayed.current) return;
+    if (!s.wsConnected || !s.sim || !s.simId) return;
+    autoPlayed.current = true;
+    void s.play();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s.wsConnected, s.sim, s.simId]);
+
   return null;
 }
 

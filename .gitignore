@@ -39,6 +39,12 @@ preview.log
 backend/models/
 backend/benchmark/cache/
 
+# ---- Generated twin artifacts (reproducible via jobs; not source) ----
+backend/generated/
+
+# ---- Visual-verification captures (produced by capture-screenshots.mjs) ----
+frontend/artifacts/
+
 # ---- Editor / OS ----
 .vscode/
 .idea/

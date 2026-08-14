@@ -42,17 +42,22 @@ def parse_scenario_messages(query: str, venue_context: str) -> List[dict]:
     ]
 
 
-def explain_messages(metrics_summary: str, bottlenecks_summary: str) -> List[dict]:
+def explain_messages(metrics_summary: str, bottlenecks_summary: str, world_summary: str = "") -> List[dict]:
     system = (
         _SYSTEM_CORE
         + "\n\nExplain what the live simulation data shows. Only reference the "
-        "metrics and bottlenecks below; never add numbers. Return JSON with "
-        "keys: summary (string), cause (string), try_actions (array of "
-        "{type, description, parameters}). type must be one of: REDIRECT, "
+        "metrics, bottlenecks and world state below; never add numbers. Return "
+        "JSON with keys: summary (string), cause (string), try_actions (array "
+        "of {type, description, parameters}). type must be one of: REDIRECT, "
         "OPEN_CORRIDOR, CLOSE_CORRIDOR, USE_ALTERNATE_EXIT, INCREASE_CAPACITY, "
-        "EMERGENCY_RESPONSE. parameters should use ids from the data."
+        "EMERGENCY_RESPONSE, CHANGE_GATE. parameters should use ids from the "
+        "data. For CHANGE_GATE use parameters {gate: <gate_id>, capacity: "
+        "<people per minute> (0 closes the gate), external: true}."
     )
-    user = f"METRICS:\n{metrics_summary}\n\nBOTTLENECKS:\n{bottlenecks_summary}"
+    user = (
+        f"METRICS:\n{metrics_summary}\n\nBOTTLENECKS:\n{bottlenecks_summary}\n\n"
+        + (f"WORLD (external demand pipeline):\n{world_summary}" if world_summary else "")
+    )
     return [
         {"role": "system", "content": system},
         {"role": "user", "content": user},

@@ -21,67 +21,73 @@
 }
 
 /* ------------------------------------------------------------------ */
-/*  Night-ops operational palette                                       */
-/*  Dark-first command instrument. One alert accent. Cool neutrals.    */
+/*  Tactical command-center palette                                     */
+/*  Dark-first, data-heavy, engineering-grade instrument.              */
+/*  Surfaces: #0F1115 / #161920. Highlight: emerald #10B981.           */
+/*  Warnings: amber #F59E0B. Critical: red #EF4444. Borders: #334155.  */
+/*  Labels: Inter. Data readouts / coordinates / times: Roboto Mono.   */
 /* ------------------------------------------------------------------ */
 :root {
-  color-scheme: light;
-  --od-bg: #eef0f2;
-  --od-surface: #f7f8fa;
-  --od-surface-dim: #e2e6ea;
-  --od-canvas: #e8ebef;
-  --od-panel: #f7f8fa;
-  --od-line: #cfd5db;
-  --od-line-strong: #a7b0b9;
-  --od-ink: #10141a;
-  --od-soft: #464e57;
-  --od-muted: #5d6670;
+  color-scheme: dark;
+  --od-bg: #0f1115;
+  --od-surface: #161920;
+  --od-surface-dim: #1b2028;
+  --od-canvas: #0f1115;
+  --od-panel: #161920;
+  --od-line: #334155;
+  --od-line-strong: #475569;
+  --od-ink: #e2e8f0;
+  --od-soft: #94a3b8;
+  --od-muted: #64748b;
 
-  --od-ok: #1b7f4c;
-  --od-ok-soft: #d8efe1;
-  --od-warn: #b06608;
-  --od-warn-soft: #f3e4c6;
-  --od-danger: #c62b29;
-  --od-danger-soft: #f6dcda;
-  --od-focus: var(--od-warn);
+  --od-ok: #10b981;
+  --od-ok-soft: rgba(16, 185, 129, 0.14);
+  --od-warn: #f59e0b;
+  --od-warn-soft: rgba(245, 158, 11, 0.14);
+  --od-danger: #ef4444;
+  --od-danger-soft: rgba(239, 68, 68, 0.16);
+  --od-focus: var(--od-ok);
   --od-emergency: var(--od-danger);
 
-  --od-grid-line: rgba(28, 36, 44, 0.07);
+  --od-grid-line: rgba(148, 163, 184, 0.09);
 
   /* 2.5D isometric slab */
-  --od-slab-top: #f7f8fa;
-  --od-slab-front: #dde2e7;
-  --od-slab-side: #c6cdd4;
+  --od-slab-top: #161a20;
+  --od-slab-front: #232a34;
+  --od-slab-side: #2e3944;
+
+  /* fonts — Inter for labels, Roboto Mono for every data readout */
+  --od-font-sans: "Inter", system-ui, sans-serif;
+  --od-font-mono: "Roboto Mono", "JetBrains Mono", monospace;
 
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 html.dark {
   color-scheme: dark;
-  --od-bg: #0a0c0e;
-  --od-surface: #121519;
-  --od-surface-dim: #171b20;
-  --od-canvas: #070809;
-  --od-panel: #121519;
-  --od-line: #22272e;
-  --od-line-strong: #3a4149;
-  --od-ink: #e7eaed;
-  --od-soft: #9aa2ab;
-  --od-muted: #78818a;
+  --od-bg: #0f1115;
+  --od-surface: #161920;
+  --od-surface-dim: #1b2028;
+  --od-canvas: #0f1115;
+  --od-panel: #161920;
+  --od-line: #334155;
+  --od-line-strong: #475569;
+  --od-ink: #e2e8f0;
+  --od-soft: #94a3b8;
+  --od-muted: #64748b;
 
-  --od-ok: #3cb879;
-  --od-ok-soft: #122a1c;
-  --od-warn: #e2a64f;
-  --od-warn-soft: #2e2312;
-  --od-danger: #ff5c55;
-  --od-danger-soft: #371514;
-  --od-focus: var(--od-warn);
+  --od-ok: #10b981;
+  --od-ok-soft: rgba(16, 185, 129, 0.14);
+  --od-warn: #f59e0b;
+  --od-warn-soft: rgba(245, 158, 11, 0.14);
+  --od-danger: #ef4444;
+  --od-danger-soft: rgba(239, 68, 68, 0.16);
+  --od-focus: var(--od-ok);
 
-  --od-grid-line: rgba(158, 174, 190, 0.06);
+  --od-grid-line: rgba(148, 163, 184, 0.09);
 
-  /* 2.5D isometric slab */
-  --od-slab-top: #151a1f;
-  --od-slab-front: #222a32;
+  --od-slab-top: #161a20;
+  --od-slab-front: #232a34;
   --od-slab-side: #2e3944;
 }
 
@@ -95,7 +101,7 @@ html.dark {
   body {
     background: var(--od-bg);
     color: var(--od-ink);
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     transition: background-color 180ms var(--ease-out), color 180ms var(--ease-out);
@@ -134,6 +140,24 @@ html.dark {
     border-bottom: 1px solid var(--od-line);
   }
 
+  /* Translucent dark command panel used by rails / overlays */
+  .cmd-panel {
+    background: rgba(22, 25, 32, 0.88);
+    border: 1px solid var(--od-line);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 14px 40px -22px rgba(0, 0, 0, 0.85);
+  }
+  .cmd-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--od-line);
+    background: linear-gradient(180deg, rgba(148, 163, 184, 0.06), transparent);
+  }
+
   .btn {
     display: inline-flex;
     align-items: center;
@@ -143,7 +167,7 @@ html.dark {
     border: 1px solid var(--od-line-strong);
     background: var(--od-surface);
     color: var(--od-ink);
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-sans);
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -165,23 +189,23 @@ html.dark {
   }
 
   .btn-solid {
-    background: var(--od-ink);
-    border-color: var(--od-ink);
-    color: var(--od-bg);
+    background: var(--od-ok);
+    border-color: var(--od-ok);
+    color: #04150d;
   }
   .btn-solid:hover:not(:disabled) {
-    border-color: var(--od-ink);
-    box-shadow: 0 1px 0 0 var(--od-line-strong);
+    border-color: var(--od-ok);
+    box-shadow: 0 0 0 1px var(--od-ok), 0 0 14px -2px rgba(16, 185, 129, 0.55);
   }
 
   .btn-ok {
     background: var(--od-ok);
     border-color: var(--od-ok);
-    color: #07120b;
+    color: #04150d;
   }
   .btn-ok:hover:not(:disabled) {
     border-color: var(--od-ok);
-    box-shadow: 0 1px 0 0 var(--od-ok);
+    box-shadow: 0 0 0 1px var(--od-ok), 0 0 14px -2px rgba(16, 185, 129, 0.55);
   }
 
   .btn-danger {
@@ -191,7 +215,7 @@ html.dark {
   }
   .btn-danger:hover:not(:disabled) {
     border-color: var(--od-danger);
-    box-shadow: 0 1px 0 0 var(--od-danger);
+    box-shadow: 0 0 0 1px var(--od-danger), 0 0 14px -2px rgba(239, 68, 68, 0.55);
   }
 
   .btn-ghost {
@@ -207,7 +231,7 @@ html.dark {
     background: var(--od-surface);
     border: 1px solid var(--od-line-strong);
     color: var(--od-ink);
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-sans);
     font-size: 12px;
     padding: 5px 8px;
     outline: none;
@@ -227,7 +251,7 @@ html.dark {
     gap: 6px;
     padding: 4px 10px;
     border: 1px solid var(--od-line);
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-sans);
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -236,7 +260,7 @@ html.dark {
     background: var(--od-surface);
     color: var(--od-ink);
     transition: transform 140ms var(--ease-out), border-color 120ms linear,
-      background-color 120ms linear, color 120ms linear;
+      background-color 120ms linear, color 120ms linear, box-shadow 120ms linear;
   }
   .chip:hover {
     border-color: var(--od-ink);
@@ -250,9 +274,10 @@ html.dark {
   }
   .chip[data-active="true"],
   .chip.is-active {
-    background: var(--od-ink);
-    border-color: var(--od-ink);
-    color: var(--od-bg);
+    background: var(--od-ok-soft);
+    border-color: var(--od-ok);
+    color: var(--od-ok);
+    box-shadow: 0 0 12px -4px rgba(16, 185, 129, 0.6);
   }
   .chip.is-warn {
     border-color: var(--od-warn);
@@ -270,13 +295,66 @@ html.dark {
     background: var(--od-ok-soft);
   }
 
+  /* Red rounded alert badge (top bar) */
+  .alert-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--od-danger);
+    background: var(--od-danger-soft);
+    color: var(--od-danger);
+    font-family: var(--od-font-sans);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    box-shadow: 0 0 14px -3px rgba(239, 68, 68, 0.6);
+  }
+  .alert-badge.is-warn {
+    border-color: var(--od-warn);
+    background: var(--od-warn-soft);
+    color: var(--od-warn);
+    box-shadow: 0 0 14px -3px rgba(245, 158, 11, 0.55);
+  }
+  .alert-badge.is-ok {
+    border-color: var(--od-ok);
+    background: var(--od-ok-soft);
+    color: var(--od-ok);
+    box-shadow: 0 0 14px -3px rgba(16, 185, 129, 0.55);
+  }
+
+  /* AI 3D twin provenance badges — honest labeling of how the twin was built */
+  .provenance-badge {
+    cursor: default;
+    font-size: 9px;
+    padding: 3px 8px;
+    letter-spacing: 0.1em;
+  }
+  .provenance-badge.is-ai {
+    border-color: var(--od-danger);
+    color: var(--od-danger);
+    background: var(--od-danger-soft);
+  }
+  .provenance-badge.is-procedural {
+    border-color: var(--od-warn);
+    color: var(--od-warn);
+    background: var(--od-warn-soft);
+  }
+  .provenance-badge.is-simulated {
+    border-color: var(--od-muted);
+    color: var(--od-muted);
+    background: var(--od-surface);
+  }
+
   .rail-btn {
     display: flex;
     align-items: center;
     gap: 10px;
     width: 100%;
     padding: 9px 14px;
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-sans);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.04em;
@@ -292,9 +370,10 @@ html.dark {
   }
   .rail-btn[data-active="true"],
   .rail-btn.is-active {
-    color: var(--od-ink);
-    background: var(--od-surface-dim);
-    border-left-color: var(--od-danger);
+    color: var(--od-ok);
+    background: var(--od-ok-soft);
+    border-left-color: var(--od-ok);
+    box-shadow: inset 0 0 20px -16px rgba(16, 185, 129, 0.7);
   }
   .rail-icon {
     justify-content: center;
@@ -318,7 +397,7 @@ html.dark {
   }
 
   .sec-label {
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-sans);
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.18em;
@@ -332,7 +411,7 @@ html.dark {
   }
 
   .meta {
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-sans);
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.1em;
@@ -340,7 +419,7 @@ html.dark {
   }
 
   .num {
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-mono);
     font-variant-numeric: tabular-nums;
   }
 
@@ -353,16 +432,17 @@ html.dark {
   .status-dot[data-state="ok"],
   .status-dot.is-ok {
     background: var(--od-ok);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--od-ok) 18%, transparent);
+    box-shadow: 0 0 6px 1px rgba(16, 185, 129, 0.65), 0 0 0 3px color-mix(in srgb, var(--od-ok) 18%, transparent);
   }
   .status-dot[data-state="warn"],
   .status-dot.is-warn {
     background: var(--od-warn);
+    box-shadow: 0 0 6px 1px rgba(245, 158, 11, 0.55), 0 0 0 3px color-mix(in srgb, var(--od-warn) 18%, transparent);
   }
   .status-dot[data-state="danger"],
   .status-dot.is-danger {
     background: var(--od-danger);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--od-danger) 20%, transparent);
+    box-shadow: 0 0 6px 1px rgba(239, 68, 68, 0.6), 0 0 0 3px color-mix(in srgb, var(--od-danger) 20%, transparent);
   }
   .status-dot[data-state="idle"] {
     background: var(--od-muted);
@@ -448,11 +528,12 @@ html.dark {
   }
 
   .font-display {
-    font-family: "Syne", system-ui, sans-serif;
+    font-family: var(--od-font-sans);
+    font-weight: 800;
   }
 
   .mono-tabular {
-    font-family: "JetBrains Mono", monospace;
+    font-family: var(--od-font-mono);
     font-variant-numeric: tabular-nums;
   }
 

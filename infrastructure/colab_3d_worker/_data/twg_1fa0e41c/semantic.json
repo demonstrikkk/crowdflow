@@ -1,0 +1,427 @@
+{
+  "schema": "crowdflow.twin.semantic.v1",
+  "venue": {
+    "id": "GENERATED",
+    "name": "Generated Stadium",
+    "type": "stadium",
+    "width_m": 80.0,
+    "height_m": 40.0
+  },
+  "levels": [
+    {
+      "id": "L0",
+      "name": "Ground",
+      "elevation_m": 0.0,
+      "height_m": 5.0
+    }
+  ],
+  "structures": [
+    {
+      "id": "PITCH",
+      "type": "FIELD",
+      "level_id": "L0",
+      "polygon": {
+        "points": [
+          {
+            "x": 24.0,
+            "y": 13.6
+          },
+          {
+            "x": 56.0,
+            "y": 13.6
+          },
+          {
+            "x": 56.0,
+            "y": 26.4
+          },
+          {
+            "x": 24.0,
+            "y": 26.4
+          }
+        ]
+      },
+      "height_m": 0.15
+    },
+    {
+      "id": "STAND_N",
+      "type": "SEATING",
+      "level_id": "L0",
+      "polygon": {
+        "points": [
+          {
+            "x": 67.2,
+            "y": 20.0
+          },
+          {
+            "x": 62.01,
+            "y": 29.4
+          },
+          {
+            "x": 48.41,
+            "y": 35.22
+          },
+          {
+            "x": 31.59,
+            "y": 35.22
+          },
+          {
+            "x": 17.99,
+            "y": 29.4
+          },
+          {
+            "x": 12.8,
+            "y": 20.0
+          },
+          {
+            "x": 17.99,
+            "y": 10.6
+          },
+          {
+            "x": 31.59,
+            "y": 4.78
+          },
+          {
+            "x": 48.41,
+            "y": 4.78
+          },
+          {
+            "x": 62.01,
+            "y": 10.6
+          }
+        ]
+      },
+      "height_m": 1.6
+    },
+    {
+      "id": "CONCOURSE_1",
+      "type": "CONCOURSE",
+      "level_id": "L0",
+      "polygon": {
+        "points": [
+          {
+            "x": 6.4,
+            "y": 8.0
+          },
+          {
+            "x": 73.6,
+            "y": 8.0
+          },
+          {
+            "x": 73.6,
+            "y": 32.0
+          },
+          {
+            "x": 6.4,
+            "y": 32.0
+          }
+        ]
+      },
+      "height_m": 0.25
+    },
+    {
+      "id": "WALL_CORNER_0",
+      "type": "WALL",
+      "level_id": "L0",
+      "polygon": {
+        "points": [
+          {
+            "x": 10,
+            "y": 10
+          },
+          {
+            "x": 16,
+            "y": 10
+          },
+          {
+            "x": 16,
+            "y": 16
+          },
+          {
+            "x": 10,
+            "y": 16
+          }
+        ]
+      },
+      "height_m": 3.0
+    },
+    {
+      "id": "WALL_CORNER_1",
+      "type": "WALL",
+      "level_id": "L0",
+      "polygon": {
+        "points": [
+          {
+            "x": 70.0,
+            "y": 10
+          },
+          {
+            "x": 76.0,
+            "y": 10
+          },
+          {
+            "x": 76.0,
+            "y": 16
+          },
+          {
+            "x": 70.0,
+            "y": 16
+          }
+        ]
+      },
+      "height_m": 3.0
+    },
+    {
+      "id": "WALL_CORNER_2",
+      "type": "WALL",
+      "level_id": "L0",
+      "polygon": {
+        "points": [
+          {
+            "x": 10,
+            "y": 30.0
+          },
+          {
+            "x": 16,
+            "y": 30.0
+          },
+          {
+            "x": 16,
+            "y": 36.0
+          },
+          {
+            "x": 10,
+            "y": 36.0
+          }
+        ]
+      },
+      "height_m": 3.0
+    },
+    {
+      "id": "WALL_CORNER_3",
+      "type": "WALL",
+      "level_id": "L0",
+      "polygon": {
+        "points": [
+          {
+            "x": 70.0,
+            "y": 30.0
+          },
+          {
+            "x": 76.0,
+            "y": 30.0
+          },
+          {
+            "x": 76.0,
+            "y": 36.0
+          },
+          {
+            "x": 70.0,
+            "y": 36.0
+          }
+        ]
+      },
+      "height_m": 3.0
+    }
+  ],
+  "gates": [
+    {
+      "id": "GATE_A",
+      "label": "Gate A",
+      "type": "ENTRY_GATE",
+      "position": {
+        "x": 16.0,
+        "y": 12.0
+      },
+      "width_m": 8.0,
+      "capacity": 180
+    },
+    {
+      "id": "GATE_B",
+      "label": "Gate B",
+      "type": "ENTRY_GATE",
+      "position": {
+        "x": 64.0,
+        "y": 12.0
+      },
+      "width_m": 8.0,
+      "capacity": 180
+    },
+    {
+      "id": "GATE_C",
+      "label": "Gate C",
+      "type": "ENTRY_GATE",
+      "position": {
+        "x": 12.0,
+        "y": 20.0
+      },
+      "width_m": 8.0,
+      "capacity": 180
+    },
+    {
+      "id": "GATE_D",
+      "label": "Gate D",
+      "type": "ENTRY_GATE",
+      "position": {
+        "x": 68.0,
+        "y": 20.0
+      },
+      "width_m": 8.0,
+      "capacity": 180
+    }
+  ],
+  "exits": [
+    {
+      "id": "EXIT_N",
+      "label": "Exit North",
+      "type": "EXIT_GATE",
+      "position": {
+        "x": 40.0,
+        "y": 28.0
+      },
+      "width_m": 10.0,
+      "capacity": 220
+    },
+    {
+      "id": "EXIT_S",
+      "label": "Exit South",
+      "type": "EXIT_GATE",
+      "position": {
+        "x": 40.0,
+        "y": 12.0
+      },
+      "width_m": 10.0,
+      "capacity": 220
+    }
+  ],
+  "emergency_exits": [
+    {
+      "id": "EMERGENCY_1",
+      "label": "Emergency Exit 1",
+      "type": "EMERGENCY_EXIT",
+      "position": {
+        "x": 17.6,
+        "y": 28.0
+      },
+      "width_m": 6.0,
+      "capacity": 140
+    },
+    {
+      "id": "EMERGENCY_2",
+      "label": "Emergency Exit 2",
+      "type": "EMERGENCY_EXIT",
+      "position": {
+        "x": 62.4,
+        "y": 28.0
+      },
+      "width_m": 6.0,
+      "capacity": 140
+    }
+  ],
+  "zones": [],
+  "paths": [
+    {
+      "id": "PATH_GATE_A_PITCH",
+      "level_id": "L0",
+      "centerline": [
+        {
+          "x": 16.0,
+          "y": 12.0
+        },
+        {
+          "x": 40.0,
+          "y": 20.0
+        }
+      ],
+      "width_m": 5.0
+    },
+    {
+      "id": "PATH_GATE_B_PITCH",
+      "level_id": "L0",
+      "centerline": [
+        {
+          "x": 64.0,
+          "y": 12.0
+        },
+        {
+          "x": 40.0,
+          "y": 20.0
+        }
+      ],
+      "width_m": 5.0
+    },
+    {
+      "id": "PATH_GATE_C_PITCH",
+      "level_id": "L0",
+      "centerline": [
+        {
+          "x": 12.0,
+          "y": 20.0
+        },
+        {
+          "x": 40.0,
+          "y": 20.0
+        }
+      ],
+      "width_m": 5.0
+    },
+    {
+      "id": "PATH_GATE_D_PITCH",
+      "level_id": "L0",
+      "centerline": [
+        {
+          "x": 68.0,
+          "y": 20.0
+        },
+        {
+          "x": 40.0,
+          "y": 20.0
+        }
+      ],
+      "width_m": 5.0
+    },
+    {
+      "id": "PATH_EMERGENCY_1_EXIT",
+      "level_id": "L0",
+      "centerline": [
+        {
+          "x": 40.0,
+          "y": 20.0
+        },
+        {
+          "x": 40.0,
+          "y": 28.0
+        }
+      ],
+      "width_m": 6.0
+    },
+    {
+      "id": "PATH_EMERGENCY_2_EXIT",
+      "level_id": "L0",
+      "centerline": [
+        {
+          "x": 40.0,
+          "y": 20.0
+        },
+        {
+          "x": 40.0,
+          "y": 28.0
+        }
+      ],
+      "width_m": 6.0
+    }
+  ],
+  "navigation": {
+    "nodes": [],
+    "edges": []
+  },
+  "bindings": [],
+  "metadata": {
+    "source": "AI_TWIN",
+    "model": "trellis",
+    "notes": [
+      "worker analysis: venue footprint scaled from blueprint aspect ratio",
+      "requested model 'trellis' unavailable; deterministic fallback used"
+    ],
+    "adapter": "procedural"
+  }
+}

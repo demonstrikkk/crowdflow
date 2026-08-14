@@ -30,9 +30,11 @@ class GroqProvider(AIProvider):
         return self.transport.parse_json(content, ParsedScenario)
 
     def explainSimulation(
-        self, metrics_summary: str, bottlenecks_summary: str
+        self, metrics_summary: str, bottlenecks_summary: str, world_summary: str = ""
     ) -> SimulationExplanation:
-        content = self.transport.chat_json(explain_messages(metrics_summary, bottlenecks_summary))
+        content = self.transport.chat_json(
+            explain_messages(metrics_summary, bottlenecks_summary, world_summary)
+        )
         return self.transport.parse_json(content, SimulationExplanation)
 
     def generateScenarioSuggestions(self, context: str) -> SuggestionBundle:

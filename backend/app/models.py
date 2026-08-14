@@ -1459,7 +1459,15 @@ class SimulationState(BaseModel):
     hazard_zones: List[Dict[str, Any]] = Field(default_factory=list)
     external: Optional["ExternalState"] = None
     causal_graph: Optional[CausalGraph] = None
+    world: Optional["WorldState"] = None
 
 
 
 ExternalState.model_rebuild()
+
+try:  # avoid circular import; world is optional and imported lazily at the bottom
+    from .world.models import WorldState  # noqa: E402
+
+    SimulationState.model_rebuild()
+except ImportError:  # pragma: no cover - world layer absent
+    pass

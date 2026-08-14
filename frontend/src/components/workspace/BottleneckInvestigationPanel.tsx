@@ -27,6 +27,7 @@ export interface BottleneckInvestigationPanelProps {
   aiExplanation: AiExplainResponse | null;
   aiBusy: boolean;
   aiConfigured: boolean | null;
+  aiError: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -162,6 +163,7 @@ export function BottleneckInvestigationPanel({
   aiExplanation,
   aiBusy,
   aiConfigured,
+  aiError,
 }: BottleneckInvestigationPanelProps) {
   // ── derived values ────────────────────────────────────────────────────────
   const utilPct = Math.min(100, Math.round(elementState.utilisation * 100));
@@ -388,6 +390,36 @@ export function BottleneckInvestigationPanel({
             <div className="shimmer-line" style={{ height: 12 }} />
             <div className="shimmer-line" style={{ height: 10 }} />
             <div className="shimmer-line" style={{ height: 10, width: '75%' }} />
+          </div>
+        )}
+
+        {/* AI failure — never silently fall back */}
+        {!aiBusy && aiError && (
+          <div className="mt-2.5 border border-od-danger bg-od-danger-soft px-2.5 py-2" role="alert">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-od-danger">
+                AI request failed
+              </span>
+            </div>
+            <p className="mt-1 text-[10px] leading-snug text-od-danger">{aiError}</p>
+            <button
+              className="btn btn-ghost mt-1.5 !border-od-danger !text-od-danger"
+              onClick={onExplainAi}
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* AI not configured */}
+        {!aiBusy && !aiError && aiConfigured === false && (
+          <div className="mt-2.5 border border-od-warn bg-od-warn-soft px-2.5 py-2" role="status">
+            <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-od-warn">
+              AI unavailable
+            </span>
+            <p className="mt-1 text-[10px] leading-snug text-od-muted">
+              No AI provider configured. Add GROQ_API_KEY / provider settings to enable analysis.
+            </p>
           </div>
         )}
 
